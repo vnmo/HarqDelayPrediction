@@ -23,23 +23,22 @@ bler_vs_dByRttRatio;
 
 | Name | Meaning | Units | Typical Default / Example |
 |---|---|---:|---|
-| `d` | End-to-end delay target | ms | e.g., `d = 5` |
+| `d` | End-to-end delay target. Suggested to NOT keep it a whole number of slot to avoid >=< confusions. | ms | e.g., `d = 5` |
 | `delta` | Feedback (ACK/NACK) delay | slots | e.g., `delta = 4` |
 | `zeta` | Decoding/processing delay | slots | e.g., `zeta = 1` |
 | `Qmax` | Max queue size for **ARQ** | pkts | e.g., `Qmax = 100` |
-| `M` | Max retransmissions for **ARQ** (excl. first tx) | count | e.g., `M = 3` |
+| `M` | Max retransmissions for **ARQ** (incl. first tx) | count | e.g., `M = 3` |
 | `Qmax_Harq` | Max queue size for **HARQ** | pkts | e.g., `Qmax_Harq = 100` |
-| `M_Harq` | Max retransmissions for **HARQ** (excl. first tx) | count | e.g., `M_Harq = 3` |
-| `T` | Slot length (per numerology) | s | `T = 1e-3` |
-| `hvar` | Channel power gain mean ( \\( \\mu_{h^2} \\) ) / variance proxy | – | `hvar = 1` |
+| `M_Harq` | Max retransmissions for **HARQ** (incl. first tx) | count | e.g., `M_Harq = 3` |
+| `T` | Slot length (as per numerology) | s | `T = 1e-3` |
+| `hvar` | Channel power gain variance | – | `hvar = 1` |
 | `V` | Dispersion coefficient (finite-blocklength) | – | `V = 1` |
 | `SNRdb_avgRcvd` | Avg received SNR | dB | e.g., `SNRdb_avgRcvd = 5` |
-| `f` | Bernoulli arrival prob. per slot (≈ arrival rate per slot) | – | e.g., `f = 0.2` |
-| `pktLen` | Payload length | bits | `pktLen = 8*100` |
+| `f` | Bernoulli arrival prob. per slot (= arrival rate per slot) | – | e.g., `f = 0.2` |
+| `pktLen` | Payload length. Choose so as to avoid segmentation. Refer paper. | bits | `pktLen = 8*100` |
 | `Nrb` | Number of RBs used for data | RB | `Nrb = 10` |
 | `Nre` | REs per slot used for **data** (= `Nrb * 180`, see note) | RE | `Nre = Nrb*180` |
 | `B` | Effective occupied bandwidth (= `180e3 * Nrb`) | Hz | `B = 180e3*Nrb` |
-| `mcsTableNum` | MCS table selector (parsed in `parseMcs.m`) | – | `1` |
 
 ### Notes on key parameters/assumptions
 - **Sloting:** `T = 1e-3` assumes µ=0 (15 kHz SCS). Adjust if you change numerology. Other numerologies would be handled by adjusting T; however is not tested.
