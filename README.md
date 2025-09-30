@@ -1,0 +1,92 @@
+
+## Overview
+MATLAB scripts to study Delay Violation Probability (DVP) for ARQ/HARQ under finite-blocklength assumptions. 
+The top-level script is A0_Script_runAllCodes.m. It resets figures and runs a sequence of all plot generators based on what is commented and what is not. (see **Reproducing figures**).
+This script could be used as a starting point to refer to all other script and the internal functions contained within. The name of the subscripts is mostly self-explanatory after going through the README.
+
+## Requirements
+- MATLAB (tested on recent 2024b)
+- Might not require any specialised toolboxes except porobably the basic ones like communication toolbox for some in-built functions. This would throw error whenever encountered.
+- All `.m` files in the same folder (or on MATLAB path)
+
+## Quick start example
+```matlab
+close all;
+h1 = figure(1); h2 = figure(2); h3 = figure(3);
+clf(h1,'reset'); clf(h2,'reset'); clf(h3,'reset');
+bler_vs_dByRttRatio;
+
+% ...uncomment the blocks you need...
+```
+
+## Parameters
+
+| Name | Meaning | Units | Typical Default / Example |
+|---|---|---:|---|
+| `d` | End-to-end delay target | ms | e.g., `d = 5` |
+| `delta` | Feedback (ACK/NACK) delay | slots | e.g., `delta = 4` |
+| `zeta` | Decoding/processing delay | slots | e.g., `zeta = 1` |
+| `Qmax` | Max queue size for **ARQ** | pkts | e.g., `Qmax = 100` |
+| `M` | Max retransmissions for **ARQ** (excl. first tx) | count | e.g., `M = 3` |
+| `Qmax_Harq` | Max queue size for **HARQ** | pkts | e.g., `Qmax_Harq = 100` |
+| `M_Harq` | Max retransmissions for **HARQ** (excl. first tx) | count | e.g., `M_Harq = 3` |
+| `T` | Slot length (per numerology) | s | `T = 1e-3` |
+| `hvar` | Channel power gain mean ( \\( \\mu_{h^2} \\) ) / variance proxy | – | `hvar = 1` |
+| `V` | Dispersion coefficient (finite-blocklength) | – | `V = 1` |
+| `SNRdb_avgRcvd` | Avg received SNR | dB | e.g., `SNRdb_avgRcvd = 5` |
+| `f` | Bernoulli arrival prob. per slot (≈ arrival rate per slot) | – | e.g., `f = 0.2` |
+| `pktLen` | Payload length | bits | `pktLen = 8*100` |
+| `Nrb` | Number of RBs used for data | RB | `Nrb = 10` |
+| `Nre` | REs per slot used for **data** (= `Nrb * 180`, see note) | RE | `Nre = Nrb*180` |
+| `B` | Effective occupied bandwidth (= `180e3 * Nrb`) | Hz | `B = 180e3*Nrb` |
+| `mcsTableNum` | MCS table selector (parsed in `parseMcs.m`) | – | `1` |
+
+### Notes on key parameters/assumptions
+- **Sloting:** `T = 1e-3` assumes µ=0 (15 kHz SCS). Adjust if you change numerology. Other numerologies would be handled by adjusting T; however is not tested.
+- **`Nre` (REs):** Uses **15 symbols** in time (excludes CP and typical control/DMRS overhead). This over-approximates usable REs; adjust to your DMRS/PDCCH/PTRS settings if needed.  
+- **`B` (Bandwidth):** Assumes full 180 kHz per RB per slot (12*15=180) is occupied by the data transmission. This is **effective used BW**, not carrier bandwidth.  
+- **MCS:** Table 1 by default; see `parseMcs.m` for mapping.
+
+## Reproducing figures
+Each function generates a set of plots. The main script cleans figures between runs.
+
+1. **DVP vs d/RTT ratio for different RTT**
+   ```matlab
+   clf(h1,'reset'); clf(h2,'reset'); clf(h3,'reset');
+   bler_vs_dByRttRatio
+   ```
+
+2. **DVP vs Nrb for different delay targets**
+   ```matlab
+   clf(h1,'reset'); clf(h2,'reset'); clf(h3,'reset');
+   blerVsNrb_vsDelayTarget
+   ```
+
+3. **DVP vs Nrb for different allocated resources per packet length**
+   
+
+4. **DVP vs Nrb for different pktLen**
+
+5. **DVP vs Nrb for different RTT**
+
+6. **DVP vs Nrb for different SNR**
+
+7. **DVP vs PktLen for different SNR**
+
+8. **DVP vs RTT for different SNR**
+   
+9. **Throughput vs f for different Nrb**
+
+10. **Throughput vs f for different RTT**
+
+10. **performance comparison**
+For comparing performance with the baselines IF scheme and also comparing between event-based simulator and closed forms. Other figures mainly plot the results.
+   ```matlab
+   clf(h1,'reset'); clf(h2,'reset'); clf(h3,'reset');
+   perf_comparison
+   ```
+
+## Tips
+- Keep `delta` and `zeta` aligned with your PHY/stack model; they directly eat into the latency budget `d`. Even if decoding delay is say half a slot but the feedback for the failed message or the forwarding of the successful message happens at slot boundary, then provide decoding delay as full slot. Adjust accordingly for other scenarios. Similarly for feedback delay, include if there is a wait before retransmission. As part of feedback as they happens always as a pair, it is not necessary to separate them. that being said one can do so and adjust easily if they wish to.
+- If modeling HARQ combining, ensure `M_Harq` logic and effective SNR accumulation are consistent across BLER/throughput functions.
+- When tightening realism, reduce `Nre` to account for DMRS/PDCCH overhead and adjust `B` if partial RBs or mini-slots are used.

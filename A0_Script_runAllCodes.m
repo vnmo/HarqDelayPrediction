@@ -1,6 +1,6 @@
 %% All codes for generating the figures can be run together with this script.
-%% Comment/uncomment whichever is necesary
-%% This could also be used as a starting point to find all functions
+%% Comment/uncomment whichever is necesary.
+%% This could also be used as a starting point to find all functions. One can select the one needed.
 
 
 close all;
