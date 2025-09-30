@@ -1,4 +1,7 @@
 
+## Referece publication
+https://arxiv.org/abs/2502.08789 
+
 ## Overview
 MATLAB scripts to study Delay Violation Probability (DVP) for ARQ/HARQ under finite-blocklength assumptions. 
 The top-level script is A0_Script_runAllCodes.m. It resets figures and runs a sequence of all plot generators based on what is commented and what is not. (see **Reproducing figures**).
