@@ -41,13 +41,13 @@ dataBits = Nre *eta;
 zeta = 0; % Decoding delay. A parameter designed later in the research.
 % So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
 
-delayTargetArray  = (2.5:0.25:20) * 1e-3;
-delayTargetArray  = delayTargetArray - zeta*1e-3;
+delayTargetArrayOrig  = (2.5:0.25:20) * 1e-3;
+delayTargetArray  = delayTargetArrayOrig - zeta*1e-3;
 if(min(delayTargetArray)<1e-3)
     error("Invalid delayTarget,zeta combination. Correct it!")
 end
-deltaArray = 0:2:6;
-deltaArray = deltaArray + zeta;
+deltaArray_Orig = 0:2:6;
+deltaArray = deltaArray_Orig + zeta;
 rttArray = 1 + deltaArray;
 
 for rttIter = 1:length(rttArray)
@@ -93,11 +93,11 @@ for rttIter = 1:length(rttArray)
     dvp_Harq(dvp_Harq>1)=1;
 
     figure(1)
-    plot(1e3*delayTargetArray/rtt,log10(dvp_Arq),lineOrder(3),...
+    plot(1e3*delayTargetArrayOrig/rtt,log10(dvp_Arq),lineOrder(3),...
         'Marker',markerOrder(1),'MarkerSize',10,...
         'color',corder(rttIter,:),'LineWidth', 3);
     hold on;
-    plot(1e3*delayTargetArray/rtt,log10(dvp_Harq),lineOrder(1),...
+    plot(1e3*delayTargetArrayOrig/rtt,log10(dvp_Harq),lineOrder(1),...
         'Marker',markerOrder(1),'MarkerSize',10,...
         'color',corder(rttIter,:),'LineWidth', 3);
 end

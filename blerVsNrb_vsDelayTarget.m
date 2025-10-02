@@ -22,16 +22,16 @@ V=1;
 SNRdb_avgRcvd = 10;
 snr_avgRcvd = 10.^(SNRdb_avgRcvd/10);
 f=1/3;
-delta = 2;
+delta_Orig = 2;
 pktLen = 8 * 100; % Packet length in bits
 
 
-delayTargetArray  = [2.5 4.5 8.5 10.5 16.5] * 1e-3;
+delayTargetArrayOrig  = [2.5 4.5 8.5 10.5 16.5] * 1e-3;
 
 zeta = 1; % Decoding delay. A parameter designed later in the research.
 % So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
-delta = delta+zeta;
-delayTargetArray=delayTargetArray-zeta*1e-3;
+delta = delta_Orig+zeta;
+delayTargetArray=delayTargetArrayOrig-zeta*1e-3;
 if(min(delayTargetArray)<1e-3)
     error("Invalid delayTarget,zeta combination. Correct it!")
 end

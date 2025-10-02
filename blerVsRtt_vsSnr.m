@@ -39,13 +39,13 @@ dataBits = Nre *eta;
 zeta = 0; % Decoding delay. A parameter designed later in the research.
 % So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
 
-d  = 8.5 * 1e-3;
-d  = d - zeta*1e-3;
+d_Orig  = 8.5 * 1e-3;
+d  = d_Orig - zeta*1e-3;
 if(d<1e-3)
     error("Invalid delayTarget,zeta combination. Correct it!")
 end
-deltaArray = 0:1:6;
-deltaArray = deltaArray + zeta;
+deltaArray_Orig = 0:1:6;
+deltaArray = deltaArray_Orig + zeta;
 rttArray = 1 + deltaArray;
 
 dvp_Arq  = zeros(1,length(rttArray));

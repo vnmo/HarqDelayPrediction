@@ -26,13 +26,13 @@ B = 180e3 * Nrb;
 zeta = 1; % Decoding delay. A parameter designed later in the research.
 % So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
 
-d  = 8.5 * 1e-3;
-d  = d - zeta*1e-3;
+d_Orig  = 8.5 * 1e-3;
+d  = d_Orig - zeta*1e-3;
 if(d<1e-3)
     error("Invalid delayTarget,zeta combination. Correct it!")
 end
-delta = 2;
-delta = delta + zeta;
+delta_Orig = 2;
+delta = delta_Orig + zeta;
 
 SNRdb_avgRcvdArray = 5:5:20;
 snr_avgRcvdArray = 10.^(SNRdb_avgRcvdArray/10);

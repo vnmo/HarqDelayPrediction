@@ -21,13 +21,13 @@ V=1;
 
 SNRdb_avgRcvd = 10;
 snr_avgRcvd = 10.^(SNRdb_avgRcvd/10);
-d = 8.5e-3;
+d_Orig = 8.5e-3;
 f=1/3;
-delta = 2;
+delta_Orig = 2;
 zeta = 1; % Decoding delay. A parameter designed later in the research.
 % So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
-delta = delta+zeta;
-d=d-zeta*1e-3;
+delta = delta_Orig+zeta;
+d=d_Orig-zeta*1e-3;
 if(d<1e-3)
     error("Invalid delayTarget,zeta combination. Correct it!")
 end

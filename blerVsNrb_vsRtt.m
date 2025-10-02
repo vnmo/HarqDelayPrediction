@@ -22,7 +22,7 @@ V=1;
 pktLen = 8 * 100; % Packet length in bits
 SNRdb_avgRcvd = 10;
 snr_avgRcvd = 10.^(SNRdb_avgRcvd/10);
-d = 8.5e-3;
+d_Orig = 8.5e-3;
 f=1/3;
 
 %%eta is spectral efficiency
@@ -40,13 +40,13 @@ dvp_Harq  = zeros(1,length(NrbList));
 dvp_Harq_sim = zeros(1,length(NrbList));
 
 
-deltaArray = [0 2 4];
+deltaArray_Orig = [0 2 4];
 
 zeta = 0; % Decoding delay. A parameter designed later in the research.
 % So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
-deltaArray = deltaArray + zeta;
+deltaArray = deltaArray_Orig + zeta;
 rttArray = 1 + deltaArray;
-d = d - zeta * T;
+d = d_Orig - zeta * T;
 
 if(d<1e-3)
     error("Invalid delayTarget,zeta combination. Correct it!")

@@ -1,5 +1,5 @@
 function [expectedBlerVector] = getFblPerVector_Harq(iterLen,snrRcvd_avg,specEff,blockLen,V,hvar,M_Harq)
-error("TO complete. Doublecheck: update required for the comment by Mikael")
+% warning("Doublecheck: update required for the comment by Mikael")
 
 blerArray = zeros(iterLen,M_Harq);
 fadingCoeff = exprnd(hvar,4,iterLen);
@@ -18,6 +18,7 @@ expectedBlerVector = mean(blerArray);
 
 end
 
+%% Old Code before necessary changes pointed out by Mikael
 % blerArray = zeros(iterLen,M_Harq);
 % fadingCoeff = exprnd(hvar,1,iterLen);
 % 
