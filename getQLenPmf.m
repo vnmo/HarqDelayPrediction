@@ -117,7 +117,7 @@ for q = 1:Qmax
         end
     end
 end
-
+P
 
 [ V , D ] = eig( P' ); % Find eigenvector/eigenvalue
 
@@ -134,5 +134,5 @@ vec = vec/sum(vec);
 
 % Marginalise over m for each q to get probability of queuelengths
 QLenPmf=sum(reshape(vec,M,Qmax+1));
-
+QLenPmf
 end

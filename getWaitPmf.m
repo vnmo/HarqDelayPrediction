@@ -8,11 +8,9 @@ function [probDistr] = getWaitPmf(pVector,f,M,Qmax)
 %   distribution is marginalised to get the wait distribution.
 
 qLenPmf = getQLenPmf(pVector,f,M,Qmax);
-qLenPmf(qLenPmf<eps)=[];
-
+% qLenPmf(qLenPmf<eps)=[];
 p_emptyQ = qLenPmf(1);
 qLenPmf(1) = [];
-
 Lq=length(qLenPmf);
 Lw = 4*Lq+1;
 waitDistribution =zeros(1,Lw);
