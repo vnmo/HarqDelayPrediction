@@ -8,7 +8,7 @@ function [dvp] = getDvpHarq (d, delta, pHarq, f, T, M, Qmax)
 
 waitpdf = getWaitPmf(pHarq(:), f, M, Qmax);
 dvp = 0;
-
+waitpdf
 for k = 0:length(waitpdf) - 1
     k_d = min(M, floor(((d / T) - k + delta) / (delta + 1)));
     % Zeta will already be considered whererever this is used. 
