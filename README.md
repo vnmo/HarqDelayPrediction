@@ -1,6 +1,7 @@
 
 ## Referece publication
 https://arxiv.org/abs/2502.08789 
+https://arxiv.org/abs/2607.06169
 
 ## Overview
 MATLAB scripts to study Delay Violation Probability (DVP) for ARQ/HARQ under finite-blocklength assumptions. 
