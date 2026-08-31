@@ -1,6 +1,6 @@
 % Proposed model: analytical DVP sweeps using getDvpHarqCSO.
 % Outputs are *Theory.csv; this script does not run a queueing simulation.
-% The results_phase_fifo root keeps revised curves apart from old outputs.
+% Outputs are written to results_phase_fifo.
 % The corresponding simulation driver is blerVsNrb_vsDelayTarget_queuingsim.
 % getLenaHarqBler supplies link-level PER inputs, not queueing observations.
 % Scenario settings are defined below; see CSO_REVISION_NOTES.md for roles.

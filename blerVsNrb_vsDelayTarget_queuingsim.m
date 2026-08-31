@@ -1,6 +1,6 @@
 % Queueing simulation: DVP sweeps using simulate_queue_IR_cso.
 % Outputs are *Simulation.csv; getDvpHarqCSO/getQLenPmfCSO are not called.
-% The results_phase_fifo root keeps revised curves apart from old outputs.
+% Outputs are written to results_phase_fifo.
 % The simulation uses packet lists and a slot clock for periodic CSO.
 % k_xi is the CSP length; phase is mod(slotId,k_xi) inside the simulator.
 % Scenario settings are defined below. simLen is a slot count.

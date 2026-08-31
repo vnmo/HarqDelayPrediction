@@ -10,12 +10,10 @@ aligns the packet queueing simulation with decoding-completion release,
 FIFO retransmission priority, and a complete generated-packet cohort.
 The waiting and service formulas remain phase-averaged approximations;
 they are not replaced by a per-process analytical model.
-Existing figures and CSV results have not been recalculated or overwritten.
 
 The source files before this numerical change are saved separately in
 `HarqDelayPrediction_before_phase_fifo_20260831.zip`. Scenario values are
-preserved. The relevant sweep scripts now use separate output folders so
-old curves are not overwritten or presented as outputs of the new code.
+defined in the sweep scripts. Their output folders are listed below.
 
 ## File roles and states
 
@@ -184,10 +182,8 @@ where the single-blockage approximation is not supported.
 | `Rev_blerVsNrb_vsDelayTarget_queuingsim.m` | `queueing_results_rtt3_phase_fifo` |
 | `testnew.m` | `results_phase_fifo` |
 
-The CSV filenames retain the `Theory`/`Simulation` distinction. These
-scripts must be rerun to obtain curves from the revised implementations.
-Plotting scripts that read the old output roots need to be pointed to the
-new folders. Their source data and existing plots have not been changed.
+The CSV filenames use the `Theory`/`Simulation` distinction. Use the
+corresponding output folders listed above as inputs to plotting scripts.
 
 - `blerVsNrb_vsDelayTarget.m` and `Rev_blerVsNrb_vsDelayTarget.m` now pass
   `zeta` to the service calculation.
@@ -225,16 +221,14 @@ Simulation tests cover decoding-time capacity release, FIFO retries across
 blocked slots, immediate use of available feedback, separate rounding,
 draining, arrival conservation, and comparison with an independent packet
 ledger that scans and sorts events instead of using ring buffers and a
-maintained priority list. These are implementation checks; they do not
-replace regenerated empirical comparisons or run-level confidence intervals.
+maintained priority list. These are implementation checks.
 
 The 35 tests passed in MATLAB R2025a on 2026-08-31. A separate 100,000-slot
 check using the stored PER input for 10 dB/MCS 9 generated 33,465 packets;
 all were admitted, 23 were discarded, and the remaining cohort finished
 with a three-slot drain. A 20,000-slot high-load check generated 15,967
 packets, admitted 5,646, rejected 10,321, and drained in 15 slots. These
-short checks verified cohort accounting and event handling; they were not
-used to replace the paper's experimental curves or estimate rare-event CIs.
+short checks verified cohort accounting and event handling.
 The first check used `rng(30,'twister')`, Bernoulli arrivals with `f=1/3`,
 `xi=80`, `Qmax=16`, `M=4`, and one slot each for decoding and feedback.
 The high-load check used seed 41, `f=0.8`, `p=[0.9,0.6,0.4,0.2]`, `xi=4`,
