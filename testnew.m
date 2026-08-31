@@ -1,3 +1,6 @@
+% Additional Proposed-model sweep using getDvpHarqCSO.
+% This is an analytical scenario script, not a queueing simulation or a
+% unit-test entry point. Formula checks are in testCsoDelays.m.
 close all;
 clearvars -except h1 h2 h3;clc
 

@@ -1,5 +1,8 @@
 function dvp = getDvpHarqCSO(d, delta, pHarq, f, T, M, Qmax, CSO, zeta)
-%GETDVPHARQCSO Approximate generated-packet DVP with waiting and service.
+%GETDVPHARQCSO Proposed model: total DVP approximation.
+% Analytical call path: getWaitPmfCSO -> getQLenPmfCSO for waiting and
+% auxiliary overflow; getServiceDvpCSO for the remaining service budget.
+% This function does not call the queueing simulation simulate_queue_IR_cso.
 % d and T use the same time unit; d may be an array of deadlines.
 % delta is the raw feedback delay in slots; zeta is the raw decoding delay.
 % Each delay is rounded up separately by getServiceDvpCSO.

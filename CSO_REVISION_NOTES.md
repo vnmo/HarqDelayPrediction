@@ -6,11 +6,55 @@ is saved in `HarqDelayPrediction-main_before_CSO_20260831.zip`.
 ## Scope
 
 This revision updates the waiting-delay and service-delay approximations and
-their combination in the total DVP. It does not change `getQLenPmfCSO.m`,
-the shared non-CSO waiting functions, or the queueing simulation files.
+their combination in the total DVP. It does not change the numerical logic
+of `getQLenPmfCSO.m`, the shared non-CSO waiting functions, or the queueing
+simulation. Comments now identify the Proposed-model and simulation files
+and describe their stored states and branches.
 The queue DTMC still averages CSO in its transition probabilities; a CS-phase
 state and individual HARQ-process states have not been added.
 Existing figures and CSV results have not been recalculated or overwritten.
+
+The source files before these comment changes are saved separately in
+`HarqDelayPrediction_CSO_before_comments_20260831.zip`. Scenario values and
+output paths were preserved during the comment changes.
+
+## File roles and states
+
+| File | Role |
+|---|---|
+| `getDvpHarqCSO.m` | Proposed model: combine auxiliary overflow, waiting, and service in the total DVP. |
+| `getQLenPmfCSO.m` | Proposed model: stationary auxiliary queue PMF from the `(q,m)` DTMC. |
+| `getWaitPmfCSO.m` | Proposed model: waiting PMF given admission, with a phase-averaged blockage weight. |
+| `getServiceDvpCSO.m` | Proposed model: phase-averaged service violation using feasible-attempt counts. |
+| `simulate_queue_IR_cso.m` | Queueing simulation: sample packet arrivals and outcomes, and process periodic blocked slots. |
+| `blerVsNrb_vsDelayTarget.m`, `Rev_blerVsNrb_vsDelayTarget.m` | Proposed-model sweeps; save `*Theory.csv`. |
+| `blerVsNrb_vsDelayTarget_queuingsim.m`, `Rev_blerVsNrb_vsDelayTarget_queuingsim.m` | Queueing-simulation sweeps; save `*Simulation.csv`. |
+
+In `getQLenPmfCSO`, `s=q*M+m` indexes the auxiliary maintained-packet count
+`q` and the attempt index `m` used to select the conditional PER. `CSO=1/xi`
+enters the transition probabilities as a blocked-slot probability. CSP phase
+is not another dimension of this matrix. The waiting and service functions
+also use phase-averaged weights; they do not advance a slot clock.
+
+In `simulate_queue_IR_cso`, `k_xi` is the CSP **length**, not the phase.
+The current phase is `mod(slotId,k_xi)`, with zero selecting the blocked
+branch. Ready packet IDs are stored in `txQueue_pktId`, attempt counts in
+`TxCount`, and future retry availability in `reTxPktIdList`. A retry becomes
+ready after transmission, decoding, and feedback delay. Other ready packets
+may transmit in the meantime. No finite HARQ-process pool is allocated.
+
+The simulation processes arrivals and retry availability before checking
+whether the slot is blocked. A blocked slot prevents data transmission;
+it does not undo those earlier updates. An idle branch means no packet is
+ready, while a packet may still be awaiting a retry. Success or final failure
+releases the admitted-packet counter when the outcome is sampled. Successful
+latency includes the later decoding completion; the final ACK is excluded.
+
+The simulation's waiting output is arrival-to-first-transmission time, not
+the auxiliary waiting PMF from `getWaitPmfCSO`. Its DVP scripts use total
+latency and admission drops. Discards have infinite latency; unresolved
+packets are omitted from the returned latency arrays. `simLen` specifies
+simulation slots, not a fixed number of generated packets.
 
 ## Waiting delay
 

@@ -1,3 +1,8 @@
+% Proposed model: analytical DVP sweeps using getDvpHarqCSO.
+% Outputs are *Theory.csv; this script does not run a queueing simulation.
+% The corresponding simulation driver is blerVsNrb_vsDelayTarget_queuingsim.
+% getLenaHarqBler supplies link-level PER inputs, not queueing observations.
+% Scenario settings are defined below; see CSO_REVISION_NOTES.md for roles.
 close all;
 clearvars -except h1 h2 h3;clc
 
@@ -17,6 +22,8 @@ for sinr_index = 1:length(sinr_list)
             saving_folder = "sinr"+string(sinr_list(sinr_index))+"_par"+string(f_inverse_list(par_index))+"_srs"+string(srs_list(srs_index));
             mkdir("results/"+saving_folder)
             isReTxPrioritised = true;
+            % This flag controls the existing output branch only; setting
+            % it true does not call simulate_queue_IR_cso in this script.
             isSimRequired = false;
             simLen =1e7;
             simLen_MonteCarlo = 1e7;
@@ -99,7 +106,7 @@ for sinr_index = 1:length(sinr_list)
                     for i = 1:M_Harq-1
                         expNumTx_Harq(nrbIter) = expNumTx_Harq(nrbIter) + i * prod(p_Harq(1:i-1)) * (1-p_Harq(i));
                     end
-                    %% DVP of with HARQ; (Truncated at M = 4)
+                    %% Proposed DVP approximation with the configured attempt cap
                     % dvp_Harq(nrbIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
                     dvp_Harq(nrbIter) = getDvpHarqCSO(d, delta, p_Harq, f, T, M_Harq, Qmax_Harq, CSO, zeta);
             

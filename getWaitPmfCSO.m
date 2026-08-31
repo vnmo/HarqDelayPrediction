@@ -1,5 +1,7 @@
 function [probDistr, pDrop] = getWaitPmfCSO(pVector, f, M, Qmax, CSO)
-%GETWAITPMFCSO Approximate waiting-delay PMF conditional on admission.
+%GETWAITPMFCSO Proposed model: approximate waiting PMF given admission.
+% This analytical function uses getQLenPmfCSO's auxiliary (q,m) DTMC;
+% it does not simulate packet queues or advance a CSP-phase clock.
 % probDistr(k+1) is the probability of waiting k slots, given admission.
 % pDrop is pi_Qmax from the existing auxiliary queue model. It is used as
 % an overflow approximation, not as a physical buffer-occupancy identity.
@@ -22,7 +24,7 @@ if CSO > 0 && M * Qmax >= 1 / CSO
         'The waiting-delay approximation requires M*Qmax < 1/CSO.');
 end
 
-% Keep the existing queue-length DTMC and remove only roundoff negatives.
+% Obtain the Proposed model's auxiliary queue PMF; remove roundoff negatives.
 qLenPmf = getQLenPmfCSO(p, f, M, Qmax, CSO);
 if any(~isfinite(qLenPmf)) || any(qLenPmf < -1e-12) ...
         || abs(sum(qLenPmf) - 1) > 1e-10
@@ -53,6 +55,7 @@ for q = 0:Qmax-1
 end
 
 % fbar(k) = (1-beta_k)*fu(k) + beta_(k-1)*fu(k-1).
+% beta is a phase-averaged blockage weight, not a stored CSP-phase state.
 % Allocate the extra slot so the final shifted probability is retained.
 k = 0:numel(underlyingProbDistr)-1;
 beta = min(1, max(0, k * CSO));

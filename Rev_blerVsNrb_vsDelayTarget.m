@@ -1,3 +1,9 @@
+% Proposed model: analytical sensitivity sweeps for M, Qmax, and RTT.
+% Calls getDvpHarqCSO and saves *Theory.csv under results_rev.
+% Queueing simulation is run by Rev_blerVsNrb_vsDelayTarget_queuingsim.
+% getLenaHarqBler supplies link-level PER inputs, not queueing observations.
+% The isSimRequired flags below control output branches; they do not
+% launch simulate_queue_IR_cso. Scenario settings are defined per sweep.
 close all;
 clearvars -except h1 h2 h3;clc
 
@@ -102,7 +108,7 @@ for M_Harq_index = 1: length(M_Harq_list)
                         for i = 1:M_Harq-1
                             expNumTx_Harq(nrbIter) = expNumTx_Harq(nrbIter) + i * prod(p_Harq(1:i-1)) * (1-p_Harq(i));
                         end
-                        %% DVP of with HARQ; (Truncated at M = 4)
+                        %% Proposed DVP approximation with the configured attempt cap
                         % dvp_Harq(nrbIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
                         dvp_Harq(nrbIter) = getDvpHarqCSO(d, delta, p_Harq, f, T, M_Harq, Qmax_Harq, CSO, zeta);
                 
@@ -260,7 +266,7 @@ for Qmax_Harq_index = 1:length(Qmax_Harq_list)
                         for i = 1:M_Harq-1
                             expNumTx_Harq(nrbIter) = expNumTx_Harq(nrbIter) + i * prod(p_Harq(1:i-1)) * (1-p_Harq(i));
                         end
-                        %% DVP of with HARQ; (Truncated at M = 4)
+                        %% Proposed DVP approximation with the configured attempt cap
                         % dvp_Harq(nrbIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
                         dvp_Harq(nrbIter) = getDvpHarqCSO(d, delta, p_Harq, f, T, M_Harq, Qmax_Harq, CSO, zeta);
                 
@@ -406,7 +412,7 @@ for RTT_index = 1: length(RTT_list)
                         for i = 1:M_Harq-1
                             expNumTx_Harq(nrbIter) = expNumTx_Harq(nrbIter) + i * prod(p_Harq(1:i-1)) * (1-p_Harq(i));
                         end
-                        %% DVP of with HARQ; (Truncated at M = 4)
+                        %% Proposed DVP approximation with the configured attempt cap
                         % dvp_Harq(nrbIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
                         dvp_Harq(nrbIter) = getDvpHarqCSO(d, delta, p_Harq, f, T, M_Harq, Qmax_Harq, CSO, zeta);
                 
