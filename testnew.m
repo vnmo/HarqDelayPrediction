@@ -18,7 +18,7 @@ for sinr_index = 1:length(sinr_list)
         for srs_index = 1:length(srs_list)
             
             saving_folder = "sinr"+string(sinr_list(sinr_index))+"_par"+string(f_inverse_list(par_index))+"_srs"+string(srs_list(srs_index));
-            mkdir("results/"+saving_folder)
+            mkdir("results_phase_fifo/"+saving_folder)
             isReTxPrioritised = true;
             isSimRequired = false;
             simLen =1e6;
@@ -132,8 +132,8 @@ for sinr_index = 1:length(sinr_list)
                     %     'color',corder(dIter,:),'LineWidth', 3);
                     % hold on;
                     
-                    writematrix(NrbList, "results/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"NRBListTheory.csv")
-                    writematrix(dvp_Harq, "results/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"DVPListTheory.csv")
+                    writematrix(NrbList, "results_phase_fifo/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"NRBListTheory.csv")
+                    writematrix(dvp_Harq, "results_phase_fifo/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"DVPListTheory.csv")
 
             
                     plot(NrbList,log10(dvp_Harq),lineOrder(1),...

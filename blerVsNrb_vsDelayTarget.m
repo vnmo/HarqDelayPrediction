@@ -1,5 +1,6 @@
 % Proposed model: analytical DVP sweeps using getDvpHarqCSO.
 % Outputs are *Theory.csv; this script does not run a queueing simulation.
+% The results_phase_fifo root keeps revised curves apart from old outputs.
 % The corresponding simulation driver is blerVsNrb_vsDelayTarget_queuingsim.
 % getLenaHarqBler supplies link-level PER inputs, not queueing observations.
 % Scenario settings are defined below; see CSO_REVISION_NOTES.md for roles.
@@ -20,7 +21,7 @@ for sinr_index = 1:length(sinr_list)
         for srs_index = 1:length(srs_list)
             
             saving_folder = "sinr"+string(sinr_list(sinr_index))+"_par"+string(f_inverse_list(par_index))+"_srs"+string(srs_list(srs_index));
-            mkdir("results/"+saving_folder)
+            mkdir("results_phase_fifo/"+saving_folder)
             isReTxPrioritised = true;
             % This flag controls the existing output branch only; setting
             % it true does not call simulate_queue_IR_cso in this script.
@@ -132,8 +133,8 @@ for sinr_index = 1:length(sinr_list)
                     %     'color',corder(dIter,:),'LineWidth', 3);
                     % hold on;
                     
-                    writematrix(NrbList, "results/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"NRBListTheory.csv")
-                    writematrix(dvp_Harq, "results/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"DVPListTheory.csv")
+                    writematrix(NrbList, "results_phase_fifo/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"NRBListTheory.csv")
+                    writematrix(dvp_Harq, "results_phase_fifo/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"DVPListTheory.csv")
                     
 
                     

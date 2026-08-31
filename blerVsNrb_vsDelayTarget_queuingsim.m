@@ -1,5 +1,6 @@
 % Queueing simulation: DVP sweeps using simulate_queue_IR_cso.
 % Outputs are *Simulation.csv; getDvpHarqCSO/getQLenPmfCSO are not called.
+% The results_phase_fifo root keeps revised curves apart from old outputs.
 % The simulation uses packet lists and a slot clock for periodic CSO.
 % k_xi is the CSP length; phase is mod(slotId,k_xi) inside the simulator.
 % Scenario settings are defined below. simLen is a slot count.
@@ -41,7 +42,7 @@ for sinr_index = 1:length(sinr_list)
             saving_folder = "sinr" + string(SNRdb_avgRcvd) + ...
                             "_par" + string(f_inverse) + ...
                             "_srs" + string(k_xi);
-            mkdir("results/" + saving_folder)
+            mkdir("results_phase_fifo/" + saving_folder)
 
             delayTargetArray = delayTargetArrayOrig * 1e-3;   % seconds
 
@@ -96,9 +97,9 @@ for sinr_index = 1:length(sinr_list)
                             isDetArr);
 
                     %% Simulation DVP
-                    % Empirical ratio from returned packet latencies plus
-                    % admission drops. Discarded packets have Inf latency;
-                    % unresolved packets are omitted by the simulator.
+                    % All admitted packets are drained to success/discard.
+                    % Adding admission drops gives all generated packets;
+                    % discarded packets have Inf latency.
                     delayTargetSlots = d / T;
                     numDelayViolations = ...
                         sum(totalLatency_sim > delayTargetSlots);
@@ -109,11 +110,11 @@ for sinr_index = 1:length(sinr_list)
 
                 %% Save simulation results only
                 writematrix(NrbList, ...
-                    "results/" + saving_folder + "/" + ...
+                    "results_phase_fifo/" + saving_folder + "/" + ...
                     string(delayTargetArrayOrig(dIter)) + "NRBListSimulation.csv");
 
                 writematrix(dvp_Harq_sim, ...
-                    "results/" + saving_folder + "/" + ...
+                    "results_phase_fifo/" + saving_folder + "/" + ...
                     string(delayTargetArrayOrig(dIter)) + "DVPListSimulation.csv");
             end
         end

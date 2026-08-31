@@ -1,208 +1,235 @@
-function [queueSize, TxCount, totalLatencyInSlotsVector, waitLatencyInslotsVector, NumDroppedPkts] = ...
+function [queueSize, TxCount, totalLatencyInSlotsVector, waitLatencyInslotsVector, NumDroppedPkts, details] = ...
     simulate_queue_IR_cso( ...
     isReTxPrioritised, p_arrival, perVector, feedbackDelay, k_xi, ...
-    MaxNumSlots, maxQueueSize, MaxTxPerPkt, isDetArr)
-%SIMULATE_QUEUE_IR_CSO Slot-by-slot IR-HARQ queueing simulation with CSO.
-% This function samples arrivals and transmission outcomes. It does not
-% construct or call the Proposed model's (q,m) transition matrix.
-% k_xi is the CSP length in slots, not the current phase. The current phase
-% is mod(slotId,k_xi); phase zero blocks data transmission for one slot.
-% Decoding delay is fixed to one slot. A failed packet becomes eligible
-% again after 1+decodingDelay+feedbackDelay slots from its transmission.
-% Other ready packets may transmit while that packet waits for feedback.
-% Packet lists and scheduled retry slots store the simulation state;
-% no finite HARQ-process pool is allocated here.
+    MaxNumSlots, maxQueueSize, MaxTxPerPkt, isDetArr, decodingDelay)
+%SIMULATE_QUEUE_IR_CSO Packet queueing simulation with periodic CSO.
+% k_xi is the CSP length, not the phase. mod(slotId,k_xi)=0 blocks data;
+% k_xi=Inf disables blockage. The first simulated slot is slotId=1.
+% The existing nine-input call uses one decoding slot. An optional tenth
+% input supplies decoding delay. Decoding and feedback are rounded up
+% separately; the start-to-start retry interval is 1+decoding+feedback.
 %
-% Per-slot order: arrival/admission, retry availability, CSO check, then
-% at most one data transmission. The branches below describe each update.
-% totalLatencyInSlotsVector ends at decoding completion, not final ACK.
-% waitLatencyInslotsVector measures only arrival-to-first-transmission
-% waiting; it is not the auxiliary waiting metric returned by getWaitPmfCSO.
+% Each slot boundary processes decoding completion, feedback availability,
+% arrivals, and then scheduling, in that order. An admitted packet occupies
+% capacity until successful decoding or final-attempt failure is available.
+% With retry priority, ready retransmissions use FIFO order ahead of first
+% transmissions. FIFO among retries is ordered by feedback availability.
+% The model uses the manuscript's nonblocking HARQ-process assumption;
+% it does not introduce a separate finite-H process-allocation rule.
+%
+% Arrivals are generated for MaxNumSlots slots. The loop then drains all
+% admitted packets without new arrivals; none is omitted from the latency
+% output. Successful delay ends at decoding, without the final ACK.
+% Discards have Inf latency. NumDroppedPkts counts rejected arrivals.
+% queueSize has MaxNumSlots entries; the draining period is not appended.
+% waitLatencyInslotsVector retains arrival-to-first-transmission waiting,
+% a diagnostic quantity distinct from the analytical aggregate waiting PMF.
+% Optional details contains counts and packet/event records for checks.
 
-%% Simulation params
-MaxNumPkts = MaxNumSlots;
-
-p_ir = perVector;
-if length(p_ir) ~= MaxTxPerPkt
-    error("Size of probability vector should be " + MaxTxPerPkt)
+if nargin < 10
+    decodingDelay = 1;
 end
-
-expTxPerPkt = 0;
-for j = 1:MaxTxPerPkt
-    expTxPerPkt = expTxPerPkt + j * (1 - p_ir(j)) * prod(p_ir(1:j-1));
+validateattributes(isReTxPrioritised, {'logical','numeric'}, {'scalar','binary'});
+validateattributes(isDetArr, {'logical','numeric'}, {'scalar','binary'});
+validateattributes(p_arrival, {'numeric'}, {'scalar','real','finite','>=',0,'<=',1});
+validateattributes(MaxNumSlots, {'numeric'}, {'scalar','real','finite','integer','nonnegative'});
+validateattributes(maxQueueSize, {'numeric'}, {'scalar','real','finite','integer','positive'});
+validateattributes(MaxTxPerPkt, {'numeric'}, {'scalar','real','finite','integer','positive'});
+validateattributes(feedbackDelay, {'numeric'}, {'scalar','real','finite','nonnegative'});
+validateattributes(decodingDelay, {'numeric'}, {'scalar','real','finite','nonnegative'});
+validateattributes(k_xi, {'numeric'}, {'scalar','real','positive'});
+if ~isinf(k_xi) && (k_xi ~= round(k_xi) || k_xi < 2)
+    error('CSO:SimulationPeriod', 'The CSP length must be an integer >=2, or Inf without blockage.');
 end
-expTxPerPkt = expTxPerPkt + MaxTxPerPkt * prod(p_ir);
-
-%% Initialize
-f = p_arrival;
-delay_fdbk = feedbackDelay;
-decodingDelay = 1;               % fixed decoding delay (one slot)
-c = 1 / f;
-
-%% Consistency check
-if isDetArr
-    if floor(c) ~= c
-        error("Configured deterministic arrivals but cycle time is not an integer.")
+validateattributes(perVector, {'numeric'}, {'vector','nonempty','real','finite','>=',0,'<=',1});
+if numel(perVector) ~= MaxTxPerPkt
+    error('CSO:InvalidPERLength', 'perVector must contain one conditional PER per allowed attempt.');
+end
+p_ir = reshape(perVector,1,[]);
+feedbackDelay = ceil(feedbackDelay);
+decodingDelay = ceil(decodingDelay);
+RTT = 1+decodingDelay+feedbackDelay;
+if isDetArr && p_arrival > 0
+    arrivalPeriod = 1/p_arrival;
+    if abs(arrivalPeriod-round(arrivalPeriod)) > 32*eps(arrivalPeriod)
+        error('CSO:DeterministicArrivalPeriod', 'Deterministic arrivals require an integer cycle length.');
     end
+    arrivalPeriod = round(arrivalPeriod);
+else
+    arrivalPeriod = Inf;
 end
 
-% Effective service-rate check with CSO
-effServiceRate = (1 - 1 / k_xi) / expTxPerPkt;
-if p_arrival > effServiceRate
-    error("Unstable Queue. Change Params")
-end
-
-%% Preallocate structures
-% Per-packet state is stored by packet ID, rather than by a DTMC index.
-% servSlot=-1 covers both ready packets and packets awaiting a retry.
-% A positive servSlot stores scheduled decoding completion after success.
-queueSize   = zeros(1, MaxNumSlots);
-arrSlot     = zeros(1, MaxNumPkts);      % Arrival slot
-TxCount     = zeros(1, MaxNumPkts);      % Number of transmissions
-servSlot    = -3 * ones(1, MaxNumPkts);  % >=1: completion slot
-                                         % -1 : unserved
-                                         % -2 : discarded
-                                         % -3 : not arrived
-firstTxSlot = zeros(1, MaxNumPkts);      % First transmission slot
-
-%% Statistics
+% A finite buffer can be simulated at any offered load; excess arrivals
+% are counted as overflow instead of being rejected by a stability check.
+queueSize = zeros(1,MaxNumSlots);
+arrSlot = zeros(1,MaxNumSlots);
+TxCount = zeros(1,MaxNumSlots);
+firstTxSlot = zeros(1,MaxNumSlots);
+completionBoundary = zeros(1,MaxNumSlots);
+discarded = false(1,MaxNumSlots);
 NumDroppedPkts = 0;
-NumIdleSlots   = 0;
-NumBlockedSlots = 0; %#ok<NASGU>
-
-%% Dynamic variables
-% txQueue_pktId holds ready packets; currQueueSize is its length.
-% numPacketsInSystem also counts packets awaiting a retry. The counter
-% decreases when success/discard is sampled, although successful latency
-% is recorded at the later decoding-completion slot in servSlot.
-pktArrId = 0;
-currQueueSize = 0;
+numGenerated = 0;
+numAdmitted = 0;
 numPacketsInSystem = 0;
-txQueue_pktId = [];
+readyIds = [];
+numReadyRetries = 0;
 
-% reTxPktIdList(t) = packet that becomes available at beginning of slot t
-reTxPktIdList = -1 * ones(1, MaxNumSlots + decodingDelay + delay_fdbk + 2);
+% Fixed stage delays and at most one transmission per slot give at most
+% one decoding event and one feedback event at each boundary. Ring buffers
+% retain these events during draining, beyond the arrival-generation end.
+decodeRingLength = decodingDelay+2;
+decodePacket = zeros(1,decodeRingLength);
+decodeSuccess = false(1,decodeRingLength);
+feedbackRingLength = feedbackDelay+1;
+feedbackPacket = zeros(1,feedbackRingLength);
 
-%% Simulation loop
-for slotId = 1:MaxNumSlots
+recordDetails = nargout > 5;
+if recordDetails
+    populationBeforeArrival = zeros(1,MaxNumSlots);
+    readySince = zeros(1,MaxNumSlots);
+    txSlotLog = [];
+    txPacketLog = [];
+    txAttemptLog = [];
+    txReadySinceLog = [];
+end
 
-    %% Arrivals
-    if isDetArr
-        isArrival = (mod(slotId, c) == 0);
-    else
-        isArrival = (rand < p_arrival);
+slotId = 1;
+% With finite attempts and at least every other slot available, this bound
+% exceeds the time needed to drain the remaining maintained population.
+drainLimit = MaxNumSlots+maxQueueSize*MaxTxPerPkt*(RTT+1)+1;
+while slotId <= MaxNumSlots || numPacketsInSystem > 0
+    if slotId > drainLimit
+        error('CSO:DrainDidNotFinish', 'The admitted population did not drain within the event bound.');
     end
 
-    if isArrival
-        if numPacketsInSystem >= maxQueueSize
-            % Full-buffer branch: reject the arrival; stored packets remain.
-            NumDroppedPkts = NumDroppedPkts + 1;
+    %% 1. Decoding outcomes become available at this boundary.
+    decodeIndex = mod(slotId-1,decodeRingLength)+1;
+    pktId = decodePacket(decodeIndex);
+    if pktId ~= 0
+        succeeded = decodeSuccess(decodeIndex);
+        decodePacket(decodeIndex) = 0;
+        if succeeded || TxCount(pktId) == MaxTxPerPkt
+            % Release only now, after transmission and decoding have elapsed.
+            completionBoundary(pktId) = slotId;
+            discarded(pktId) = ~succeeded;
+            numPacketsInSystem = numPacketsInSystem-1;
         else
-            % Admission branch: new packet is ready at the queue tail,
-            % with TxCount=0 and servSlot=-1 until success or discard.
-            pktArrId = pktArrId + 1;
-            arrSlot(pktArrId) = slotId;
-            firstTxSlot(pktArrId) = -1;
-            TxCount(pktArrId) = 0;
-            servSlot(pktArrId) = -1;
-
-            currQueueSize = currQueueSize + 1;
-            numPacketsInSystem = numPacketsInSystem + 1;
-            txQueue_pktId(end+1) = pktArrId;
+            % Failed but not capped: keep capacity until a later outcome.
+            readyBoundary = slotId+feedbackDelay;
+            feedbackIndex = mod(readyBoundary-1,feedbackRingLength)+1;
+            if feedbackPacket(feedbackIndex) ~= 0
+                error('CSO:FeedbackEventCollision', 'Two packets were scheduled for the same feedback entry.');
+            end
+            feedbackPacket(feedbackIndex) = pktId;
         end
     end
 
-    %% Retransmissions become available at the start of this slot
-    if reTxPktIdList(slotId) ~= -1
-        % Awaiting retry -> ready. The packet is already admitted, so
-        % numPacketsInSystem does not increase again.
-        currQueueSize = currQueueSize + 1;
-
+    %% 2. A NACK available now makes its packet ready in the same slot.
+    feedbackIndex = mod(slotId-1,feedbackRingLength)+1;
+    pktId = feedbackPacket(feedbackIndex);
+    if pktId ~= 0
+        feedbackPacket(feedbackIndex) = 0;
         if isReTxPrioritised
-            % A newly eligible retry is inserted at the queue head.
-            txQueue_pktId = [reTxPktIdList(slotId), txQueue_pktId];
+            % Append after older ready retries, before first transmissions.
+            readyIds = [readyIds(1:numReadyRetries), pktId, readyIds(numReadyRetries+1:end)];
+            numReadyRetries = numReadyRetries+1;
         else
-            % Without retry priority, insert it at the queue tail.
-            txQueue_pktId(end+1) = reTxPktIdList(slotId);
+            % Without priority, all newly ready packets join one FIFO tail.
+            readyIds(end+1) = pktId; %#ok<AGROW>
+        end
+        if recordDetails
+            readySince(pktId) = slotId;
         end
     end
 
-    %% CSO check: one blocked slot every k_xi slots
-    % The clock supplies the CSP phase; no separate phase array is needed.
-    % mod(slotId,k_xi)=0 -> blocked; phases 1,...,k_xi-1 -> data slot.
-    isCsoSlot = (mod(slotId, k_xi) == 0);
-
-    %% Transmission
-    if isCsoSlot
-        % Blocked branch: no packet is transmitted and no TxCount changes.
-        % Arrivals and retry availability have already been processed.
-        NumBlockedSlots = NumBlockedSlots + 1;
-
-    elseif currQueueSize == 0
-        % Idle branch: no packet is ready; future retries may still exist.
-        NumIdleSlots = NumIdleSlots + 1; %#ok<NASGU>
-
-    else
-        % Data branch: transmit the head packet and increment its count.
-        pktTxId = txQueue_pktId(1);
-        txQueue_pktId(1) = [];
-
-        if TxCount(pktTxId) == 0
-            firstTxSlot(pktTxId) = slotId;
+    %% 3. Arrival-first admission, using the population at this boundary.
+    if slotId <= MaxNumSlots
+        if recordDetails
+            populationBeforeArrival(slotId) = numPacketsInSystem;
         end
-
-        TxCount(pktTxId) = TxCount(pktTxId) + 1;
-
-        pSuccess = 1 - p_ir(TxCount(pktTxId));
-        if rand < pSuccess
-            % Success branch: ready -> scheduled decoding completion.
-            % Release the packet count now; add decoding to its latency.
-            servSlot(pktTxId) = slotId + decodingDelay;
-            currQueueSize = currQueueSize - 1;
-            numPacketsInSystem = numPacketsInSystem - 1;
-
+        if p_arrival == 0
+            isArrival = false;
+        elseif isDetArr
+            isArrival = mod(slotId,arrivalPeriod)==0;
         else
-            if TxCount(pktTxId) == MaxTxPerPkt
-                % Final failure branch: ready -> discarded (servSlot=-2).
-                servSlot(pktTxId) = -2;
-                currQueueSize = currQueueSize - 1;
-                numPacketsInSystem = numPacketsInSystem - 1;
+            isArrival = rand < p_arrival;
+        end
+        if isArrival
+            numGenerated = numGenerated+1;
+            if numPacketsInSystem >= maxQueueSize
+                % A transmission later in this slot cannot rescue this arrival.
+                NumDroppedPkts = NumDroppedPkts+1;
             else
-                % Retry branch: ready -> awaiting retry (servSlot stays -1).
-                % It leaves the ready queue but remains admitted.
-                % futureSlot includes transmission, decoding, and feedback.
-                currQueueSize = currQueueSize - 1;
-                futureSlot = slotId + decodingDelay + delay_fdbk + 1;
-                if futureSlot <= length(reTxPktIdList)
-                    reTxPktIdList(futureSlot) = pktTxId;
+                numAdmitted = numAdmitted+1;
+                numPacketsInSystem = numPacketsInSystem+1;
+                arrSlot(numAdmitted) = slotId;
+                readyIds(end+1) = numAdmitted; %#ok<AGROW>
+                if recordDetails
+                    readySince(numAdmitted) = slotId;
                 end
             end
         end
     end
 
-    %% Observe queue size at slot boundary
-    queueSize(slotId) = numPacketsInSystem;
+    %% 4. Periodic CSO blocks scheduling, not decoding or feedback events.
+    isCsoSlot = ~isinf(k_xi) && mod(slotId,k_xi)==0;
+    if ~isCsoSlot && ~isempty(readyIds)
+        pktId = readyIds(1);
+        readyIds(1) = [];
+        if TxCount(pktId) == 0
+            firstTxSlot(pktId) = slotId;
+        elseif isReTxPrioritised
+            numReadyRetries = numReadyRetries-1;
+        end
+        TxCount(pktId) = TxCount(pktId)+1;
+
+        % Sample the attempt outcome now, but apply it only when decoding
+        % finishes. Capacity is not released by this transmission branch.
+        dueBoundary = slotId+1+decodingDelay;
+        decodeIndex = mod(dueBoundary-1,decodeRingLength)+1;
+        if decodePacket(decodeIndex) ~= 0
+            error('CSO:DecodingEventCollision', 'Two packets were scheduled for the same decoding entry.');
+        end
+        decodePacket(decodeIndex) = pktId;
+        decodeSuccess(decodeIndex) = rand < 1-p_ir(TxCount(pktId));
+        if recordDetails
+            txSlotLog(end+1) = slotId; %#ok<AGROW>
+            txPacketLog(end+1) = pktId; %#ok<AGROW>
+            txAttemptLog(end+1) = TxCount(pktId); %#ok<AGROW>
+            txReadySinceLog(end+1) = readySince(pktId); %#ok<AGROW>
+        end
+    end
+
+    if numPacketsInSystem < 0 || numPacketsInSystem > maxQueueSize
+        error('CSO:PopulationInvariant', 'The maintained population is outside its allowed range.');
+    end
+    if slotId <= MaxNumSlots
+        queueSize(slotId) = numPacketsInSystem;
+    end
+    slotId = slotId+1;
 end
 
-%% Post-processing
-% Omit unresolved packets and unused entries from the returned latency
-% arrays. Admission drops are returned separately in NumDroppedPkts.
-isPktUnserved   = (servSlot == -1);
-isPktNotArrived = (servSlot == -3);
-isPktInvalid    = (isPktUnserved + isPktNotArrived) > 0;
+%% Return the complete admitted cohort, including terminal discards.
+arrSlot = arrSlot(1:numAdmitted);
+TxCount = TxCount(1:numAdmitted);
+firstTxSlot = firstTxSlot(1:numAdmitted);
+completionBoundary = completionBoundary(1:numAdmitted);
+discarded = discarded(1:numAdmitted);
+if any(completionBoundary==0) || any(firstTxSlot==0)
+    error('CSO:UnfinishedPackets', 'A packet has no terminal decoding outcome after draining.');
+end
+totalLatencyInSlotsVector = completionBoundary-arrSlot;
+totalLatencyInSlotsVector(discarded) = Inf;
+waitLatencyInslotsVector = firstTxSlot-arrSlot;
 
-servSlot(isPktInvalid) = [];
-TxCount(isPktInvalid) = [];
-arrSlot(isPktInvalid) = [];
-firstTxSlot(isPktInvalid) = [];
-
-isPktDiscarded = (servSlot == -2);
-% Discards have infinite latency and therefore violate every finite target.
-servSlot(isPktDiscarded) = Inf;
-
-% Include the transmission slot and successful decoding, but no final ACK.
-totalLatencyInSlotsVector = 1 + (servSlot - arrSlot);
-% This diagnostic output excludes waiting between retransmissions.
-waitLatencyInslotsVector  = firstTxSlot - arrSlot;
-
+if recordDetails
+    details = struct('generatedPackets',numGenerated,'admittedPackets',numAdmitted, ...
+        'overflowDrops',NumDroppedPkts,'successfulPackets',sum(~discarded), ...
+        'discardedPackets',sum(discarded),'unfinishedPackets',0, ...
+        'drainSlots',max(0,slotId-1-MaxNumSlots),'finalPopulation',numPacketsInSystem, ...
+        'decodingDelaySlots',decodingDelay,'feedbackDelaySlots',feedbackDelay, ...
+        'arrivalSlot',arrSlot,'firstTxSlot',firstTxSlot,'completionBoundary',completionBoundary, ...
+        'populationBeforeArrival',populationBeforeArrival,'txSlot',txSlotLog, ...
+        'txPacketId',txPacketLog,'txAttempt',txAttemptLog,'txReadySince',txReadySinceLog);
+end
 end

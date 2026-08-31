@@ -11,9 +11,11 @@ This script could be used as a starting point to refer to all other script and t
 
 The Proposed model is implemented by `getDvpHarqCSO`, `getQLenPmfCSO`,
 `getWaitPmfCSO`, and `getServiceDvpCSO`. Queueing simulation is implemented
-separately by `simulate_queue_IR_cso`. The analytical queue uses `(q,m)`
-with a CSO probability; the simulator obtains the periodic CSP phase from
-its slot clock. See [CSO_REVISION_NOTES.md](CSO_REVISION_NOTES.md) for the
+separately by `simulate_queue_IR_cso`. The analytical queue uses
+`(q,m,k_xi)` with a deterministic CSP-phase advance and arrival-first
+full-buffer transitions. The simulator releases capacity at decoding
+completion, schedules ready retries in FIFO order, and drains admitted
+packets after arrivals stop. See [CSO_REVISION_NOTES.md](CSO_REVISION_NOTES.md) for the
 file roles, state variables, and corresponding run scripts. Current CSO
 scenario settings are in those scripts; the parameter examples below are
 general examples for the wider code collection.

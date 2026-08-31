@@ -33,7 +33,7 @@ defaultQmax = 16;
 rttList = [3 4 5 6];%[2 4 6 8 10];       % HARQ RTT in slots
 MList = 1:4; %1:4;
 QmaxList = [1 2 4 8 16];%[4 8 12 16];
-resultRoot = "queueing_results_rtt3";
+resultRoot = "queueing_results_rtt3_phase_fifo";
 
 %% 1. HARQ RTT sensitivity
 for rttSlots = rttList
@@ -219,8 +219,9 @@ function runQueueSensitivity( ...
                 isDetArr);
 
         %% Calculate DVP for all delay targets
-        % Include returned latencies and admission drops. Discards have
-        % Inf latency; unresolved packets are omitted by the simulator.
+        % All admitted packets are drained before return. Their latencies
+        % plus admission drops cover every generated packet; discards
+        % have Inf latency and violate each finite deadline.
         for dIter = 1:length(delayTargetMs)
 
             delayTargetSlots = ...

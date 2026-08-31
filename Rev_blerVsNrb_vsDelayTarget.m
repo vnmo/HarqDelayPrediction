@@ -1,5 +1,5 @@
 % Proposed model: analytical sensitivity sweeps for M, Qmax, and RTT.
-% Calls getDvpHarqCSO and saves *Theory.csv under results_rev.
+% Calls getDvpHarqCSO and saves *Theory.csv under results_rev_phase_fifo.
 % Queueing simulation is run by Rev_blerVsNrb_vsDelayTarget_queuingsim.
 % getLenaHarqBler supplies link-level PER inputs, not queueing observations.
 % The isSimRequired flags below control output branches; they do not
@@ -24,7 +24,7 @@ for M_Harq_index = 1: length(M_Harq_list)
             for srs_index = 1:length(srs_list)
                 
                 saving_folder = "sinr"+string(sinr_list(sinr_index))+"_par"+string(f_inverse_list(par_index))+"_srs"+string(srs_list(srs_index));
-                mkdir("results_rev/max_attempts"+string(M_Harq_list(M_Harq_index))+"/"+saving_folder)
+                mkdir("results_rev_phase_fifo/max_attempts"+string(M_Harq_list(M_Harq_index))+"/"+saving_folder)
                 isReTxPrioritised = true;
                 isSimRequired = false;
                 simLen =1e6;
@@ -134,8 +134,8 @@ for M_Harq_index = 1: length(M_Harq_list)
                         %     'color',corder(dIter,:),'LineWidth', 3);
                         % hold on;
                         
-                        writematrix(NrbList, "results_rev/max_attempts"+string(M_Harq)+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"NRBListTheory.csv")
-                        writematrix(dvp_Harq, "results_rev/max_attempts"+string(M_Harq)+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"DVPListTheory.csv")
+                        writematrix(NrbList, "results_rev_phase_fifo/max_attempts"+string(M_Harq)+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"NRBListTheory.csv")
+                        writematrix(dvp_Harq, "results_rev_phase_fifo/max_attempts"+string(M_Harq)+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"DVPListTheory.csv")
                         
     
                         
@@ -182,7 +182,7 @@ for Qmax_Harq_index = 1:length(Qmax_Harq_list)
             for srs_index = 1:length(srs_list)
                 
                 saving_folder = "sinr"+string(sinr_list(sinr_index))+"_par"+string(f_inverse_list(par_index))+"_srs"+string(srs_list(srs_index));
-                mkdir("results_rev/Q"+string(Qmax_Harq_list(Qmax_Harq_index))+"/"+saving_folder)
+                mkdir("results_rev_phase_fifo/Q"+string(Qmax_Harq_list(Qmax_Harq_index))+"/"+saving_folder)
                 isReTxPrioritised = true;
                 isSimRequired = false;
                 simLen =1e6;
@@ -292,8 +292,8 @@ for Qmax_Harq_index = 1:length(Qmax_Harq_list)
                         %     'color',corder(dIter,:),'LineWidth', 3);
                         % hold on;
                         
-                        writematrix(NrbList, "results_rev/Q"+string(Qmax_Harq)+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"NRBListTheory.csv")
-                        writematrix(dvp_Harq, "results_rev/Q"+string(Qmax_Harq)+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"DVPListTheory.csv")
+                        writematrix(NrbList, "results_rev_phase_fifo/Q"+string(Qmax_Harq)+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"NRBListTheory.csv")
+                        writematrix(dvp_Harq, "results_rev_phase_fifo/Q"+string(Qmax_Harq)+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"DVPListTheory.csv")
                         
     
                         
@@ -327,7 +327,7 @@ for RTT_index = 1: length(RTT_list)
             for srs_index = 1:length(srs_list)
                 
                 saving_folder = "sinr"+string(sinr_list(sinr_index))+"_par"+string(f_inverse_list(par_index))+"_srs"+string(srs_list(srs_index));
-                mkdir("results_rev/RTT"+string(RTT_list(RTT_index))+"/"+saving_folder)
+                mkdir("results_rev_phase_fifo/RTT"+string(RTT_list(RTT_index))+"/"+saving_folder)
                 isReTxPrioritised = true;
                 isSimRequired = false;
                 simLen =1e6;
@@ -438,8 +438,8 @@ for RTT_index = 1: length(RTT_list)
                         %     'color',corder(dIter,:),'LineWidth', 3);
                         % hold on;
                         
-                        writematrix(NrbList, "results_rev/RTT"+string(RTT_list(RTT_index))+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"NRBListTheory.csv")
-                        writematrix(dvp_Harq, "results_rev/RTT"+string(RTT_list(RTT_index))+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"DVPListTheory.csv")
+                        writematrix(NrbList, "results_rev_phase_fifo/RTT"+string(RTT_list(RTT_index))+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"NRBListTheory.csv")
+                        writematrix(dvp_Harq, "results_rev_phase_fifo/RTT"+string(RTT_list(RTT_index))+"/"+saving_folder+"/"+string(delayTargetArrayOrig(dIter))+"DVPListTheory.csv")
                         
     
                         

@@ -1,7 +1,8 @@
 function [probDistr, pDrop] = getWaitPmfCSO(pVector, f, M, Qmax, CSO)
 %GETWAITPMFCSO Proposed model: approximate waiting PMF given admission.
-% This analytical function uses getQLenPmfCSO's auxiliary (q,m) DTMC;
-% it does not simulate packet queues or advance a CSP-phase clock.
+% This analytical function uses getQLenPmfCSO's auxiliary (q,m,k_xi) DTMC.
+% Queue evolution retains the CSP phase; the waiting correction below
+% uses phase-averaged weights rather than a packet queueing simulation.
 % probDistr(k+1) is the probability of waiting k slots, given admission.
 % pDrop is pi_Qmax from the existing auxiliary queue model. It is used as
 % an overflow approximation, not as a physical buffer-occupancy identity.
