@@ -1,7 +1,7 @@
 function [snrTable_dB, blerTable, cbsUsed] = getLenaTable_EESM_BG2(mcsIndex)
-% 자동 생성된 함수: nr-eesm-t1.cc (BG TYPE 2, BlerForSinr1) 기반
-% mcsIndex: 0~28 (파일에 있는 범위)
-% cbsTarget: 원하는 CBS (이에 가장 가까운 큰 CBS 선택)
+% Generated from nr-eesm-t1.cc (BG TYPE 2, BlerForSinr1)
+% mcsIndex: MCS index supported by the table
+% cbsUsed: fixed CBS value used by this table
 cbsUsed = 984;
 switch mcsIndex
     case 0
@@ -46,6 +46,6 @@ switch mcsIndex
    
        
     otherwise
-        error('MCS %d에 대한 LENA 테이블이 구현되지 않았습니다.', mcsIndex);
+        error('No LENA table is available for MCS %d.', mcsIndex);
 end
 end

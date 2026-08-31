@@ -39,10 +39,10 @@ if min(delayTargetArray) < 1e-3
     error("Invalid delayTarget,zeta combination. Correct it!")
 end
 
-% ===== 사용할 MCS만 지정 =====
+% ===== Select the MCS values to use =====
 targetMcsList = [20 14 12 9 5];
 
-% 출력 폴더
+% Output folder
 if ~exist("testbedresults", "dir")
     mkdir("testbedresults");
 end
@@ -67,11 +67,11 @@ for dIter = 1:length(delayTargetArray)
     dvp_Harq = nan(1, length(NrbList));
     dvp_Harq_sim = nan(1, length(NrbList)); %#ok<NASGU>
 
-    % 실제 plot/save에 쓸 대표 NRB와 MCS
+    % Representative NRB and MCS for plotting and saving
     NrbPlot = nan(1, length(NrbList));
     McsPlot = nan(1, length(NrbList));
 
-    % 같은 MCS를 여러 번 저장하지 않기 위한 변수
+    % Track the previous MCS to avoid duplicate saves
     McsPrev = -1;
 
     for nrbIter = 1:length(NrbList)
@@ -79,7 +79,7 @@ for dIter = 1:length(delayTargetArray)
         Nre = Nrb * 134.16;
         B = 134e3 * Nrb; %#ok<NASGU>
 
-        % 현재 Nrb에서 packet을 보낼 수 있는 최소 MCS 선택
+        % Select the lowest MCS that can carry the packet at the current Nrb
         etaMin_local = pktLen / (134.16 * Nrb);
         eta = [];
         mcs = [];
@@ -96,11 +96,11 @@ for dIter = 1:length(delayTargetArray)
         disp(mcs);
         dataBits = Nre * eta; %#ok<NASGU>
 
-        % ===== target MCS만 사용, 같은 MCS는 첫 등장 1번만 계산 =====
+        % ===== Evaluate each target MCS on its first occurrence =====
         if ismember(mcs, targetMcsList) && (mcs ~= McsPrev)
 
-            % x축용 대표 PRB per slot은 현재 scan Nrb가 아니라
-            % 해당 MCS의 spectral efficiency로 직접 계산
+            % Compute the representative PRBs per slot from the selected MCS
+            % spectral efficiency rather than the current scanned Nrb
             [~, ~, eta_target] = parseMcs(mcs, 1);
             Nrb_target = ceil(pktLen / (134.16 * eta_target));
 
@@ -127,12 +127,12 @@ for dIter = 1:length(delayTargetArray)
             end
 
             %% DVP with HARQ using testbed queue PMF
-            % getDvpHarqTestbed 내부에서 comparison_queue_pmf.csv의
-            % resMCS{mcs} column을 읽는다고 가정
+            % getDvpHarqTestbed is assumed to read the resMCS{mcs} column
+            % from comparison_queue_pmf.csv
             dvp_Harq(nrbIter) = getDvpHarqTestbed( ...
                 d, delta, p_Harq, f, T, M_Harq, Qmax_Harq, mcs);
 
-            % 같은 MCS 반복 저장 방지
+            % Avoid saving the same MCS again
             McsPrev = mcs;
         end
     end
@@ -140,21 +140,21 @@ for dIter = 1:length(delayTargetArray)
     dvp_Harq(dvp_Harq > 1) = 1;
 
     if isSimRequired
-        % 필요시 시뮬레이션 plot 추가
+        % Add a simulation plot here if needed
     else
-        % ===== 선택된 점만 추출 =====
+        % ===== Extract the selected points =====
         validIdx = ~isnan(dvp_Harq) & ~isnan(NrbPlot) & ~isnan(McsPlot);
 
         NrbList_valid = NrbPlot(validIdx);
         dvp_Harq_valid = dvp_Harq(validIdx);
         Mcs_valid = McsPlot(validIdx);
 
-        % x축 순서대로 정렬
+        % Sort by the x-axis values
         [NrbList_valid, sortIdx] = sort(NrbList_valid);
         dvp_Harq_valid = dvp_Harq_valid(sortIdx);
         Mcs_valid = Mcs_valid(sortIdx);
 
-        % 저장
+        % Save
         writematrix(NrbList_valid, "testbedresults/" + string(delayTargetArrayOrig(dIter)) + "NRBListTheory.csv");
         writematrix(dvp_Harq_valid, "testbedresults/" + string(delayTargetArrayOrig(dIter)) + "DVPListTheory.csv");
         writematrix(Mcs_valid, "testbedresults/" + string(delayTargetArrayOrig(dIter)) + "MCSListTheory.csv");
@@ -167,7 +167,7 @@ for dIter = 1:length(delayTargetArray)
             'LineWidth', 3);
         hold on;
 
-        % 각 점에 MCS 라벨 표시하고 싶으면 이 블록 주석 해제
+        % Uncomment this block to label each point with its MCS
         % for k = 1:length(NrbList_valid)
         %     text(NrbList_valid(k) + 0.15, log10(dvp_Harq_valid(k)), ...
         %         "MCS " + string(Mcs_valid(k)), ...

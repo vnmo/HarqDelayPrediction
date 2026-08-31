@@ -37,7 +37,7 @@ switch sinrDb
             case 20
                 expectedBlerVector = [0.333387, 0.235711, 0.867227, 0.848201];
             otherwise
-                error('SINR=%d dB, MCS %d에 대한 테이블이 없습니다.', sinrDb, mcsIndex);
+                error('No table is available for SINR=%d dB, MCS %d.', sinrDb, mcsIndex);
         end
 
     case 20
@@ -67,7 +67,7 @@ switch sinrDb
             case 20
                 expectedBlerVector = [0.008586, 0.288354, 0.908075, 0.811415];
             otherwise
-                error('SINR=%d dB, MCS %d에 대한 테이블이 없습니다.', sinrDb, mcsIndex);
+                error('No table is available for SINR=%d dB, MCS %d.', sinrDb, mcsIndex);
         end
 
     case 30
@@ -97,10 +97,10 @@ switch sinrDb
             case 20
                 expectedBlerVector = [0.000803, 0.205123, 0.961898, 0.777231];
             otherwise
-                error('SINR=%d dB, MCS %d에 대한 테이블이 없습니다.', sinrDb, mcsIndex);
+                error('No table is available for SINR=%d dB, MCS %d.', sinrDb, mcsIndex);
         end
 
     otherwise
-        error('SINR=%d dB에 대한 테이블이 없습니다.', sinrDb);
+        error('No table is available for SINR=%d dB.', sinrDb);
 end
 end

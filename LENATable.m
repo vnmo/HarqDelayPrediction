@@ -1,14 +1,14 @@
 function [snrTable_dB, blerTable, cbsUsed] = getLenaTable_EESM_BG2(mcsIndex, cbsTarget)
-% 자동 생성된 함수: nr-eesm-t1.cc (BG TYPE 2, BlerForSinr1) 기반
-% mcsIndex: 0~28 (파일에 있는 범위)
-% cbsTarget: 원하는 CBS (이에 가장 가까운 큰 CBS 선택)
+% Generated from nr-eesm-t1.cc (BG TYPE 2, BlerForSinr1)
+% mcsIndex: MCS index supported by the table
+% cbsTarget: target CBS (selects the smallest available CBS at least this large)
 
 switch mcsIndex
     case 0
         lenaCbsList = [24 32 40 48 56 64 72 80 88 104 112 128 152 160 176 184 272 304 336 368 384 432 456 528 552 768 848 928 984 1064 1160 1256 1320 1544 1672 1864 2024 2088 2280 2408 2792 3104 3240 3624];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -151,7 +151,7 @@ switch mcsIndex
         lenaCbsList = [24 32 40 48 56 64 72 80 88 104 112 128 192 208 224 240 272 304 336 368 384 432 456 552 704 736 848 928 984 1064 1160 1224 1416 1544 1736 1864 2024 2216 2280 2536 2664 3104 3240 3624];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -294,7 +294,7 @@ switch mcsIndex
         lenaCbsList = [24 32 40 48 56 64 72 80 88 104 112 128 192 208 224 240 272 304 336 368 384 432 456 552 704 768 848 888 984 1064 1160 1256 1416 1544 1736 1864 2024 2088 2280 2536 2664 3104 3368 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -437,7 +437,7 @@ switch mcsIndex
         lenaCbsList = [24 32 40 48 56 64 72 80 88 104 112 128 192 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2216 2280 2536 2728 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -580,7 +580,7 @@ switch mcsIndex
         lenaCbsList = [24 32 40 48 56 64 72 80 88 104 112 128 192 208 224 240 272 304 336 368 384 432 456 480 704 768 848 928 984 1064 1160 1256 1416 1480 1736 1864 2024 2216 2280 2408 2856 3104 3368 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -723,7 +723,7 @@ switch mcsIndex
         lenaCbsList = [24 32 40 48 56 64 72 80 88 104 112 128 192 208 224 240 272 304 336 368 384 432 456 552 608 768 848 928 984 1064 1160 1256 1416 1544 1736 1800 2024 2216 2280 2536 2856 2976 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -866,7 +866,7 @@ switch mcsIndex
         lenaCbsList = [24 32 40 48 56 64 72 80 88 104 112 128 192 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2088 2280 2536 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -1009,7 +1009,7 @@ switch mcsIndex
         lenaCbsList = [24 32 40 48 56 64 72 80 88 104 112 128 192 208 224 240 272 304 336 368 384 432 456 552 704 768 808 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2216 2280 2472 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -1152,7 +1152,7 @@ switch mcsIndex
         lenaCbsList = [56 64 72 80 88 104 112 128 192 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2216 2280 2536 2792 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -1283,7 +1283,7 @@ switch mcsIndex
         lenaCbsList = [56 64 72 80 88 104 112 128 192 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2216 2280 2536 2856 3104 3240 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -1414,7 +1414,7 @@ switch mcsIndex
         lenaCbsList = [24 32 40 48 56 64 72 80 88 104 112 128 192 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2216 2280 2536 2856 3104 3240 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -1557,7 +1557,7 @@ switch mcsIndex
         lenaCbsList = [24 32 40 48 56 64 72 88 104 112 128 192 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1192 1416 1544 1736 1864 2024 2216 2280 2536 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -1697,7 +1697,7 @@ switch mcsIndex
         lenaCbsList = [24 40 48 104 128 192 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1352 1544 1736 1864 2024 2216 2280 2536 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -1819,7 +1819,7 @@ switch mcsIndex
         lenaCbsList = [32 40 56 64 80 88 96 112 120 192 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2216 2280 2536 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -1953,7 +1953,7 @@ switch mcsIndex
         lenaCbsList = [32 48 64 72 88 96 112 128 192 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2216 2280 2536 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -2084,7 +2084,7 @@ switch mcsIndex
         lenaCbsList = [40 56 72 80 96 112 128 184 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 1928 2216 2280 2536 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -2212,7 +2212,7 @@ switch mcsIndex
         lenaCbsList = [40 56 72 88 104 120 184 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2088 2280 2536 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -2337,7 +2337,7 @@ switch mcsIndex
         lenaCbsList = [40 56 72 88 104 120 184 208 224 240 272 304 336 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2088 2280 2536 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -2462,7 +2462,7 @@ switch mcsIndex
         lenaCbsList = [48 64 80 96 112 128 192 208 224 240 272 304 320 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2152 2280 2536 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -2587,7 +2587,7 @@ switch mcsIndex
         lenaCbsList = [48 72 88 104 120 144 192 224 240 272 304 320 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2216 2280 2408 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -2709,7 +2709,7 @@ switch mcsIndex
         lenaCbsList = [56 72 96 112 152 192 224 240 272 304 336 352 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2216 2280 2536 2664 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -2828,7 +2828,7 @@ switch mcsIndex
         lenaCbsList = [64 80 104 128 144 192 224 240 256 304 320 368 384 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2216 2280 2536 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -2947,7 +2947,7 @@ switch mcsIndex
         lenaCbsList = [64 88 112 160 184 208 240 256 304 320 368 432 456 552 704 768 848 928 984 1064 1160 1256 1416 1544 1736 1864 2024 2216 2280 2536 2856 3104 3496 3752];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -3060,7 +3060,7 @@ switch mcsIndex
         lenaCbsList = [72 96 208 224 272];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -3086,7 +3086,7 @@ switch mcsIndex
         lenaCbsList = [80 184 240 272];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -3109,7 +3109,7 @@ switch mcsIndex
         lenaCbsList = [0];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -3123,7 +3123,7 @@ switch mcsIndex
         lenaCbsList = [120];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -3137,7 +3137,7 @@ switch mcsIndex
         lenaCbsList = [152 184 256];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -3157,7 +3157,7 @@ switch mcsIndex
         lenaCbsList = [0];
         idx = find(lenaCbsList >= cbsTarget, 1, 'first');
         if isempty(idx)
-            % cbsTarget보다 큰게 없으면 가장 마지막 CBS 사용
+            % Use the largest available CBS if none reaches cbsTarget
             idx = length(lenaCbsList);
         end
         cbsUsed = lenaCbsList(idx);
@@ -3168,6 +3168,6 @@ switch mcsIndex
         end
 
     otherwise
-        error('MCS %d에 대한 LENA 테이블이 구현되지 않았습니다.', mcsIndex);
+        error('No LENA table is available for MCS %d.', mcsIndex);
 end
 end

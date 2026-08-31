@@ -1,18 +1,32 @@
-function [dvp] = getDvpHarqCSO(d , delta, pHarq, f, T, M, Qmax,CSO)
-%GETDVPHARQ Function to get the DVP with IR
-%   Function description
+function dvp = getDvpHarqCSO(d, delta, pHarq, f, T, M, Qmax, CSO, zeta)
+%GETDVPHARQCSO Approximate generated-packet DVP with waiting and service.
+% d and T use the same time unit; d may be an array of deadlines.
+% delta is the raw feedback delay in slots; zeta is the raw decoding delay.
+% Each delay is rounded up separately by getServiceDvpCSO.
+% The legacy eight-input call uses zeta=1, hence RTT=ceil(delta)+2.
+% pHarq contains conditional PERs. CSO=1/xi, or zero without blockage.
+% Drops, waiting beyond the deadline, and service violations are combined
+% without counting the admission probability twice. Discards are violations.
 
-% k_d = min(M, 1 + floor((d/T - 1) / (delta + 1)));
-% dvp_IR_serv = prod(pHarq(1:k_d));
-waitpdf = getWaitPmfCSO(pHarq(:), f, M, Qmax, CSO);
-dvp = 0;
-
-for k = 0:length(waitpdf) - 1
-    k_d = min(M, floor(((d / T) - k +delta) / (delta + 2)));
-    k_d_CSO = min(M, floor(((d / T) - k+delta-1) / (delta + 2))); % originally it was delta+1
-    % Zeta will already be considered whererever this is used. 
-    % this is same as k_d = min(M, 1 + floor(((d / T) - 1 - k) / (delta + 1)));
-    dvp = dvp + (1-k_d*CSO)*waitpdf(k+1) * prod(pHarq(1:k_d)) + (k_d*CSO)*waitpdf(k + 1) * prod(pHarq(1:k_d_CSO));
+if nargin < 9
+    zeta = 1;
 end
+validateattributes(d, {'numeric'}, {'real','nonnan'});
+validateattributes(T, {'numeric'}, {'scalar','real','finite','positive'});
 
+% Validate the service parameters even when d is empty.
+getServiceDvpCSO([], zeta, delta, pHarq, M, CSO);
+[waitpdf, pDrop] = getWaitPmfCSO(pHarq, f, M, Qmax, CSO);
+waitingSlots = 0:numel(waitpdf)-1;
+dvp = zeros(size(d));
+for index = 1:numel(d)
+    residualSlots = d(index) / T - waitingSlots;
+    exceedsDeadline = waitingSlots > floor(d(index) / T);
+    waitingTail = sum(waitpdf(exceedsDeadline));
+    serviceViolation = getServiceDvpCSO(residualSlots(~exceedsDeadline), ...
+        zeta, delta, pHarq, M, CSO);
+    admittedViolation = waitingTail ...
+        + sum(waitpdf(~exceedsDeadline) .* serviceViolation);
+    dvp(index) = pDrop + (1-pDrop) * admittedViolation;
+end
 end

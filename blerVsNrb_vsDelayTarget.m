@@ -1,14 +1,14 @@
 close all;
 clearvars -except h1 h2 h3;clc
 
-corder = colororder;
-lineOrder = ["-","--",":","-","--",":","-."];
-markerOrder = ["none","o","x","diamond","|","square"];
+% corder = [colororder colororder];
+lineOrder = ["-","--",":","-","--",":","-.","-","--",":","-","--",":","-.",];
+markerOrder = ["none","o","x","diamond","|","square","none","o","x","diamond","|","square",];
 
-delayTargetArrayOrig  = [2 3 5 6 8 10];
+delayTargetArrayOrig  = [2 3 5 6 7 8 10 11 12];
 f_inverse_list = [3 6 8 10];
-sinr_list = [10 20 30];
-srs_list = [0];
+sinr_list = [10 20];
+srs_list = [80 320];
 
 for sinr_index = 1:length(sinr_list)
     for par_index = 1:length(f_inverse_list)
@@ -18,8 +18,8 @@ for sinr_index = 1:length(sinr_list)
             mkdir("results/"+saving_folder)
             isReTxPrioritised = true;
             isSimRequired = false;
-            simLen =1e6;
-            simLen_MonteCarlo = 1e6;
+            simLen =1e7;
+            simLen_MonteCarlo = 1e7;
             
             Qmax = Inf;
             M = Inf;
@@ -36,15 +36,14 @@ for sinr_index = 1:length(sinr_list)
             f_inverse = f_inverse_list(par_index);
             f=1/f_inverse;
             
-            delta_Orig = 1; % Feedback delay
+            delta_Orig = 1.0; % Feedback delay
             pktLen = 8 * 108; % Packet length in bits
             CSO = 1/srs_list(srs_index); % Control Signalling Overhead
             % delayTargetArrayOrig  = [2.5 5.5 8.5 11.5 14.5] * 1e-3;
             
             
-            zeta = 1; % Decoding delay. A parameter designed later in the research.
-            % So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
-            delta = delta_Orig+zeta;
+            zeta = 1.0; % Raw decoding delay in slots, rounded up in service analysis
+            delta = 1; % Raw feedback delay in slots, rounded up separately
             delayTargetArray=(delayTargetArrayOrig)*1e-3;
             if(min(delayTargetArray)<1e-3)
                 error("Invalid delayTarget,zeta combination. Correct it!")
@@ -101,8 +100,8 @@ for sinr_index = 1:length(sinr_list)
                         expNumTx_Harq(nrbIter) = expNumTx_Harq(nrbIter) + i * prod(p_Harq(1:i-1)) * (1-p_Harq(i));
                     end
                     %% DVP of with HARQ; (Truncated at M = 4)
-                    dvp_Harq(nrbIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
-                    % dvp_Harq(nrbIter) = getDvpHarqCSO(d, delta, p_Harq, f, T, M_Harq, Qmax_Harq, CSO);
+                    % dvp_Harq(nrbIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
+                    dvp_Harq(nrbIter) = getDvpHarqCSO(d, delta, p_Harq, f, T, M_Harq, Qmax_Harq, CSO, zeta);
             
                 end
                 % dvp_Harq
@@ -134,7 +133,7 @@ for sinr_index = 1:length(sinr_list)
             
                     plot(NrbList,log10(dvp_Harq),lineOrder(1),...
                         'Marker',markerOrder(dIter),'MarkerSize',10,...
-                        'color',corder(dIter,:),'LineWidth', 3);
+                        'LineWidth', 3);
                     hold on;
                     % figure(2)
                     % plot(NrbList.*expNumTx_Arq,log10(dvp_Arq),lineOrder(3),...

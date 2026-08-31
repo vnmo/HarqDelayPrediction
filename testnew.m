@@ -42,9 +42,9 @@ for sinr_index = 1:length(sinr_list)
             % delayTargetArrayOrig  = [2.5 5.5 8.5 11.5 14.5] * 1e-3;
             
             
-            zeta = 1; % Decoding delay. A parameter designed later in the research.
-            % So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
-            delta = delta_Orig+zeta;
+            zeta = 1; % Raw decoding delay in slots
+            % Pass feedback and decoding separately; do not add decoding twice.
+            delta = delta_Orig;
             delayTargetArray=(delayTargetArrayOrig)*1e-3;
             if(min(delayTargetArray)<1e-3)
                 error("Invalid delayTarget,zeta combination. Correct it!")
@@ -102,7 +102,7 @@ for sinr_index = 1:length(sinr_list)
                     end
                     %% DVP of with HARQ; (Truncated at M = 4)
                     %dvp_Harq(nrbIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
-                    dvp_Harq(nrbIter) = getDvpHarqCSO(d, delta, p_Harq, f, T, M_Harq, Qmax_Harq, CSO);
+                    dvp_Harq(nrbIter) = getDvpHarqCSO(d, delta, p_Harq, f, T, M_Harq, Qmax_Harq, CSO, zeta);
                                         
                     probDist= getWaitPmfCSO(p_Harq,f,M_Harq,Qmax_Harq,CSO)
                     writematrix(probDist, "waitPmfTheory"+string(mcs)+".csv")
