@@ -39,10 +39,8 @@ if min(delayTargetArray) < 1e-3
     error("Invalid delayTarget,zeta combination. Correct it!")
 end
 
-% ===== Select the MCS values to use =====
 targetMcsList = [20 14 12 9 5];
 
-% Output folder
 if ~exist("testbedresults", "dir")
     mkdir("testbedresults");
 end
@@ -52,7 +50,6 @@ figure(1);
 for dIter = 1:length(delayTargetArray)
     d = delayTargetArray(dIter);
 
-    % eta is spectral efficiency
     [~, ~, etaMax] = parseMcs(28,1);
     Nrb_min = ceil(pktLen / (134.16 * etaMax));
     [~, ~, etaMin] = parseMcs(0,1);
@@ -67,11 +64,9 @@ for dIter = 1:length(delayTargetArray)
     dvp_Harq = nan(1, length(NrbList));
     dvp_Harq_sim = nan(1, length(NrbList)); %#ok<NASGU>
 
-    % Representative NRB and MCS for plotting and saving
     NrbPlot = nan(1, length(NrbList));
     McsPlot = nan(1, length(NrbList));
 
-    % Track the previous MCS to avoid duplicate saves
     McsPrev = -1;
 
     for nrbIter = 1:length(NrbList)
@@ -79,7 +74,6 @@ for dIter = 1:length(delayTargetArray)
         Nre = Nrb * 134.16;
         B = 134e3 * Nrb; %#ok<NASGU>
 
-        % Select the lowest MCS that can carry the packet at the current Nrb
         etaMin_local = pktLen / (134.16 * Nrb);
         eta = [];
         mcs = [];
@@ -96,19 +90,14 @@ for dIter = 1:length(delayTargetArray)
         disp(mcs);
         dataBits = Nre * eta; %#ok<NASGU>
 
-        % ===== Evaluate each target MCS on its first occurrence =====
         if ismember(mcs, targetMcsList) && (mcs ~= McsPrev)
 
-            % Compute the representative PRBs per slot from the selected MCS
-            % spectral efficiency rather than the current scanned Nrb
             [~, ~, eta_target] = parseMcs(mcs, 1);
             Nrb_target = ceil(pktLen / (134.16 * eta_target));
 
             NrbPlot(nrbIter) = Nrb_target;
             McsPlot(nrbIter) = mcs;
 
-            %% ========= HARQ ================================================
-            % p_Harq = getFblPerVector_Harq(simLen_MonteCarlo, snr_avgRcvd, eta_target, Nrb_target*134.16, V, hvar, M_Harq);
             p_Harq = getLenaHarqBler( ...
                 simLen_MonteCarlo, ...
                 mcs, ...
@@ -119,20 +108,15 @@ for dIter = 1:length(delayTargetArray)
                 816, ...
                 Nrb_target);
 
-            %% Expected #transmissions
             expNumTx_Harq(nrbIter) = M_Harq * prod(p_Harq);
             for i = 1:M_Harq-1
                 expNumTx_Harq(nrbIter) = expNumTx_Harq(nrbIter) ...
                     + i * prod(p_Harq(1:i-1)) * (1 - p_Harq(i));
             end
 
-            %% DVP with HARQ using testbed queue PMF
-            % getDvpHarqTestbed is assumed to read the resMCS{mcs} column
-            % from comparison_queue_pmf.csv
             dvp_Harq(nrbIter) = getDvpHarqTestbed( ...
                 d, delta, p_Harq, f, T, M_Harq, Qmax_Harq, mcs);
 
-            % Avoid saving the same MCS again
             McsPrev = mcs;
         end
     end
@@ -140,26 +124,21 @@ for dIter = 1:length(delayTargetArray)
     dvp_Harq(dvp_Harq > 1) = 1;
 
     if isSimRequired
-        % Add a simulation plot here if needed
     else
-        % ===== Extract the selected points =====
         validIdx = ~isnan(dvp_Harq) & ~isnan(NrbPlot) & ~isnan(McsPlot);
 
         NrbList_valid = NrbPlot(validIdx);
         dvp_Harq_valid = dvp_Harq(validIdx);
         Mcs_valid = McsPlot(validIdx);
 
-        % Sort by the x-axis values
         [NrbList_valid, sortIdx] = sort(NrbList_valid);
         dvp_Harq_valid = dvp_Harq_valid(sortIdx);
         Mcs_valid = Mcs_valid(sortIdx);
 
-        % Save
         writematrix(NrbList_valid, "testbedresults/" + string(delayTargetArrayOrig(dIter)) + "NRBListTheory.csv");
         writematrix(dvp_Harq_valid, "testbedresults/" + string(delayTargetArrayOrig(dIter)) + "DVPListTheory.csv");
         writematrix(Mcs_valid, "testbedresults/" + string(delayTargetArrayOrig(dIter)) + "MCSListTheory.csv");
 
-        % plot
         plot(NrbList_valid, log10(dvp_Harq_valid), lineOrder(1), ...
             'Marker', markerOrder(dIter), ...
             'MarkerSize', 10, ...
@@ -167,12 +146,6 @@ for dIter = 1:length(delayTargetArray)
             'LineWidth', 3);
         hold on;
 
-        % Uncomment this block to label each point with its MCS
-        % for k = 1:length(NrbList_valid)
-        %     text(NrbList_valid(k) + 0.15, log10(dvp_Harq_valid(k)), ...
-        %         "MCS " + string(Mcs_valid(k)), ...
-        %         'FontSize', 12, 'Color', corder(dIter,:));
-        % end
     end
 end
 
@@ -202,6 +175,3 @@ xlim([0, 20])
 yticks([-6, -5, -4, -3, -2, -1, 0])
 yticklabels({'10^{-6}', '10^{-5}', '10^{-4}', '10^{-3}', '10^{-2}', '10^{-1}', '1'})
 
-% saveas(gcf, 'Figures/blerVsNrb_vsDelayTarget.fig')
-% saveas(gcf, 'Figures/blerVsNrb_vsDelayTarget.epsc')
-% movefile('Figures/blerVsNrb_vsDelayTarget.epsc', 'Figures/blerVsNrb_vsDelayTarget.eps')

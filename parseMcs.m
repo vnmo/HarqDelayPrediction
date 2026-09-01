@@ -7,7 +7,6 @@ if nargin < 2
 end
 
 if mcsTableNum == 1
-    % 38.214  - Table 5.1.3.1-1: MCS index table 1 for PDSCH
     switch mcs
         case 0
             Qm = 2; codeRate = 120; specEff = 0.2344;
@@ -71,7 +70,6 @@ if mcsTableNum == 1
             Qm = -1; codeRate = -1; specEff = -1;
     end
 elseif mcsTableNum == 2
-    % 38.214 - Table 5.1.3.1-2: MCS index table 2 for PDSCH
     switch mcs
         case 0
             Qm = 2;  codeRate = 120  ;  specEff = 0.2344;
@@ -133,7 +131,6 @@ elseif mcsTableNum == 2
             Qm = -1; codeRate = -1; specEff = -1;
     end
 elseif mcsTableNum == 3
-    % 38.214 - Table 5.1.3.1-3: MCS index table 3 for PDSCH
     switch mcs
         case 0
             Qm = 2;   codeRate = 30 ;   specEff = 0.0586;

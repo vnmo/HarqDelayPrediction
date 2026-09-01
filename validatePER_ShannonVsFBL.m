@@ -16,7 +16,6 @@ V=1;
 
 pkTLen = 8 * 1000; % Packet length in bits
 
-%%eta is spectral efficiency
 [~, ~, etaMax] = parseMcs(28,1);
 Nrb_min = ceil(pkTLen/(180*etaMax));
 [~, ~, etaMin] = parseMcs(0,1);
@@ -36,7 +35,6 @@ for nrbIter = 1:length(NrbList)
     Nre = Nrb *180;
     B = 180e3 * Nrb;
 
-    %Select the minimum possible MCS to transfer the bits
     etaMin = pkTLen/(180*Nrb);
     eta=[];
     mcs=[];
@@ -53,12 +51,9 @@ for nrbIter = 1:length(NrbList)
 
 
 
-    %% PER computation.
     snrTx_avg = snrRcvd_avg/hvar;
-    % Shannon Outage
     p_shannon(nrbIter)= 1-exp((1-exp(dataBits*log(2)/(T*B)))/(snrTx_avg*hvar));
 
-    % FBL Approximation
     p_FBL(nrbIter) = getFblPer(simLen_MonteCarlo,snrRcvd_avg,eta,Nre,V,hvar);
 
 end
@@ -76,11 +71,9 @@ end
 
 
 set(gca,'Fontsize',24)
-% titletext = "DVP(total) at $d = "+d*1000+"$ ms vs. allocated resources per slot.";
-% title(titletext,'fontsize',36,'interpreter','latex');
 grid on;
-legend('SNR = 10dB, Shannon outage ','SNR = 10dB, FBL approximation',...
-    'SNR = 20dB, Shannon outage ','SNR = 20dB, FBL approximation',...
+legend('SNR = 10dB, Shannon outage ','SNR = 10dB, FBL model',...
+    'SNR = 20dB, Shannon outage ','SNR = 20dB, FBL model',...
     'fontsize',24,'interpreter','latex','location','northeast','NumColumns',2,'Orientation','horizontal');
 
 xlabel('$N_{RB}$','fontsize',36,'interpreter','latex');
@@ -111,7 +104,6 @@ for nRbIter = 1:length(NrbList)
     Nre = Nrb *180;
     B = 180e3 * Nrb;
 
-    % Select the minimum possible MCS to transfer the bits
     etaMin = pkTLen/(180*Nrb);
     eta=[];
     mcs=[];
@@ -130,12 +122,9 @@ for snrIter = 1:length(RcvdSnrAvgDbList)
     SNRdb = RcvdSnrAvgDbList(snrIter);
     snrRcvd_avg = 10.^(SNRdb/10);
 
-    %% PER computation.
     snrTx_avg = snrRcvd_avg/hvar;
-    % Shannon Outage
     p_shannon(snrIter)= 1-exp((1-exp(dataBits*log(2)/(T*B)))/(snrTx_avg*hvar));
 
-    % FBL Approximation
     p_FBL(snrIter) = getFblPer(simLen_MonteCarlo,snrRcvd_avg,eta,Nre,V,hvar);
 
 end
@@ -153,11 +142,9 @@ end
 
 
 set(gca,'Fontsize',24)
-% titletext = "DVP(total) at $d = "+d*1000+"$ ms vs. allocated resources per slot.";
-% title(titletext,'fontsize',36,'interpreter','latex');
 grid on;
-legend("$N_{\mathrm{RB}}="+ NrbList(1)+"$, Shannon outage ","$N_{\mathrm{RB}}="+ NrbList(1)+"$, FBL approximation",...
-    "$N_{\mathrm{RB}}="+ NrbList(2)+"$, Shannon outage ","$N_{\mathrm{RB}}="+ NrbList(2)+"$, FBL approximation",...
+legend("$N_{\mathrm{RB}}="+ NrbList(1)+"$, Shannon outage ","$N_{\mathrm{RB}}="+ NrbList(1)+"$, FBL model",...
+    "$N_{\mathrm{RB}}="+ NrbList(2)+"$, Shannon outage ","$N_{\mathrm{RB}}="+ NrbList(2)+"$, FBL model",...
     'fontsize',24,'interpreter','latex','location','northeast','NumColumns',2,'Orientation','horizontal');
 
 xlabel('SNR (dB)','fontsize',36,'interpreter','latex');

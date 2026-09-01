@@ -1,4 +1,3 @@
-% close all;
 clearvars -except h1 h2 h3;clc
 
 corder = colororder;
@@ -25,7 +24,6 @@ d_Orig = 8.5e-3;
 f=1/3;
 delta_Orig = 2;
 zeta = 1; % Decoding delay. A parameter designed later in the research.
-% So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
 delta = delta_Orig+zeta;
 d=d_Orig-zeta*1e-3;
 if(d<1e-3)
@@ -36,7 +34,6 @@ pktLenArray = 8 * [30 50 100 200]; % Packet length in bits
 for pktLenIter = 1:length(pktLenArray)
     pktLen = pktLenArray(pktLenIter)
 
-    % eta is spectral efficiency
     [~, ~, etaMax] = parseMcs(28,1);
     Nrb_min = ceil(pktLen/(180*etaMax));
     [~, ~, etaMin] = parseMcs(0,1);
@@ -56,7 +53,6 @@ for pktLenIter = 1:length(pktLenArray)
         Nre = Nrb *180;
         B = 180e3 * Nrb;
 
-        % Select the minimum possible MCS to transfer the bits
         etaMin = pktLen/(180*Nrb);
         eta=[];
         mcs=[];
@@ -71,24 +67,15 @@ for pktLenIter = 1:length(pktLenArray)
 
         dataBits = Nre *eta;
 
-        %% =========ARQ========================================================
 
-        %% PER computation.
-        %         % Shannon Outage
-        %         p(nrbIter)= 1-exp((1-exp(dataBits*log(2)/(T*B)))/(snr*var_hSquare));
 
-        % FBL Approximation
         pArq = getFblPer(simLen_MonteCarlo,snr_avgRcvd,eta,Nre,V,hvar);
 
-        %% Expected #transmissions
         expNumTx_Arq(nrbIter) = 1/(1-(pArq));
 
 
-        %% ARQ DVP with feedback delay (Theory)
-        % total delay closed form
         kd = floor(((d/T) + delta)/(1 + delta));
 
-        % Let
         q = pArq/(1 - f);
 
         term1 = pArq^kd;
@@ -99,25 +86,20 @@ for pktLenIter = 1:length(pktLenArray)
         dvp_Arq(nrbIter) = term1 - (term2 * term3) / term4;
 
 
-        %% ARQ DVP with feedback delay (Simulation)
         if(isSimRequired)
             [~,~,latencyInSlotsVector,~] = simulate_queue_noIR(isReTxPrioritised,f,pArq(nrbIter),delta,simLen,Qmax,M,false);
             delaytargetInSlots = (d/T);
             dvp_Arq_sim(nrbIter) = (sum(latencyInSlotsVector > delaytargetInSlots))/length(latencyInSlotsVector);
         end
 
-        %% =========HARQ========================================================
 
-        %% PER computation.
         p_Harq = getFblPerVector_Harq(simLen_MonteCarlo,snr_avgRcvd,eta,Nre,V,hvar,M_Harq);
 
-        %% Expected #transmissions
         expNumTx_Harq(nrbIter) = M_Harq * prod(p_Harq);
         for i = 1:M_Harq-1
             expNumTx_Harq(nrbIter) = expNumTx_Harq(nrbIter) + i * prod(p_Harq(1:i-1)) * (1-p_Harq(i));
         end
 
-        %% DVP of with HARQ; (Truncated at M = 4)
         dvp_Harq(nrbIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
     end
 
@@ -159,8 +141,6 @@ end
 
 figure(1)
 set(gca,'Fontsize',28)
-% titletext = "DVP(total) at $d = "+d*1000+"$ ms vs. allocated resources per slot.";
-% title(titletext,'fontsize',42,'interpreter','latex');
 grid on;
 legend( 'ARQ: $n = 30$ B' ,'HARQ: $n = 30$ B' ,...
     'ARQ: $n = 50$ B' ,'HARQ: $n = 50$ B' ,...
@@ -170,14 +150,11 @@ legend( 'ARQ: $n = 30$ B' ,'HARQ: $n = 30$ B' ,...
 
 xlabel('Allocated $N_{RB}$ per slot','fontsize',42,'interpreter','latex');
 ylabel('log$_{10}$(DVP)','fontsize',42,'interpreter','latex');
-% grid minor
 ylim([-4,0])
 xlim([0,40])
 
 figure(2)
 set(gca,'Fontsize',28)
-% titletext = "DVP(total) at $d = "+d*1000+"$ ms vs. average consumed resources per packet.";
-% title(titletext,'fontsize',42,'interpreter','latex');
 grid on;
 legend( 'ARQ: $n = 30$ B' ,'HARQ: $n = 30$ B' ,...
     'ARQ: $n = 50$ B' ,'HARQ: $n = 50$ B' ,...
@@ -187,7 +164,6 @@ legend( 'ARQ: $n = 30$ B' ,'HARQ: $n = 30$ B' ,...
 
 xlabel('Average RB consumed per packet','fontsize',42,'interpreter','latex');
 ylabel('log$_{10}$(DVP)','fontsize',42,'interpreter','latex');
-% grid minor
 ylim([-4,0])
 xlim([0,40])
 

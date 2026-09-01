@@ -1,4 +1,3 @@
-% close all;
 clearvars -except h1 h2 h3;clc
 
 corder = colororder;
@@ -34,7 +33,6 @@ delayTargetArrayOrig  = (2.5:0.1:25) * 1e-3;
 McsArray = 10:2:20;
 
 zeta = 1; % Decoding delay. A parameter designed later in the research.
-% So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
 delta = delta_Orig+zeta;
 delayTargetArray=delayTargetArrayOrig-zeta*1e-3;
 if(min(delayTargetArray)<1e-3)
@@ -46,7 +44,6 @@ delayTargetLen = length(delayTargetArray);
 for mccIdx = 1:length(McsArray)
     mcs = McsArray(mccIdx)
 
-    % eta is spectral efficiency
     [~, ~, eta] = parseMcs(mcs,1);
     Nrb = ceil(pktLen/(180*eta));
     Nre = Nrb *180;
@@ -61,21 +58,13 @@ for mccIdx = 1:length(McsArray)
     for dIter = 1:delayTargetLen
         d = delayTargetArray(dIter);
         if(isArqRequired)
-            %% =========ARQ========================================================
 
-            % PER computation.
-            %         % Shannon Outage
-            %         p(nrbIter)= 1-exp((1-exp(dataBits*log(2)/(T*B)))/(snr*var_hSquare));
 
-            % FBL Approximation
             pArq = getFblPer(simLen_MonteCarlo,snr_avgRcvd,eta,Nre,V,hvar);
 
 
-            % ARQ DVP with feedback delay (Theory)
-            % total delay closed form
             kd = floor(((d/T) + delta)/(1 + delta));
 
-            % Let
             q = pArq/(1 - f);
 
             term1 = pArq^kd;
@@ -86,19 +75,15 @@ for mccIdx = 1:length(McsArray)
             dvp_Arq(dIter) = term1 - (term2 * term3) / term4;
 
 
-            %% ARQ DVP with feedback delay (Simulation, if activated)
             if(isSimRequired)
                 [~,~,latencyInSlotsVector,~] = simulate_queue_noIR(isReTxPrioritised,f,pArq(nrbIter),delta,simLen,Qmax,M,false);
                 delaytargetInSlots = (d/T);
                 dvp_Arq_sim(dIter) = (sum(latencyInSlotsVector > delaytargetInSlots))/length(latencyInSlotsVector);
             end
         end
-        %% =========HARQ========================================================
 
-        % PER computation.
         p_Harq = getFblPerVector_Harq(simLen_MonteCarlo,snr_avgRcvd,eta,Nre,V,hvar,M_Harq);
 
-        % DVP of with HARQ; (Truncated at M = 4)
         dvp_Harq(dIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
 
     end

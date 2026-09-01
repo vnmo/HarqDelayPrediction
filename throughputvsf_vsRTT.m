@@ -18,7 +18,6 @@ pktLen = 8 * 100; % Packet length in bits
 d = 8.5e-3;
 delta = 2;
 zeta = 0; % Decoding delay. A parameter designed later in the research.
-% So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
 deltaArray = [0 2 4 6];
 deltaArray = deltaArray + zeta;
 d=d-zeta*1e-3;
@@ -31,7 +30,6 @@ rttArray = 1+deltaArray;
 SNRdb_avgRcvd = 10;
 snr_avgRcvd = 10.^(SNRdb_avgRcvd/10);
 
-%%eta is spectral efficiency
 [~, ~, etaMax] = parseMcs(28,1);
 Nrb_min = ceil(pktLen/(180*etaMax));
 [~, ~, etaMin] = parseMcs(0,1);
@@ -44,7 +42,6 @@ Nrb=   10;
 Nre = Nrb *180;
 B = 180e3 * Nrb;
 
-%Select the minimum possible MCS to transfer the bits
 etaMin = pktLen/(180*Nrb);
 eta=[];
 mcs=[];
@@ -66,7 +63,6 @@ for rttIter=1:length(rttArray)
     delta= deltaArray(rttIter);
 
 
-    %% ========= PER COMPUTATION =========
     pArq = getFblPer(simLen_MonteCarlo,snr_avgRcvd,eta,Nre,V,hvar);
     p_Harq = getFblPerVector_Harq(simLen_MonteCarlo,snr_avgRcvd,eta,Nre,V,hvar,M_Harq);
 
@@ -78,24 +74,12 @@ for rttIter=1:length(rttArray)
 
     for fIter=1:length(fList)
         f=fList(fIter);
-        % %% ========= ARQ =========
-        % kd = floor(((d/T) + delta)/(1 + delta));
-        % q = pArq/(1 - f); % Let
-        %
-        % term1 = pArq^kd;
-        % term2 = f * (q)^(floor(d/T) + delta);
-        % term3 = 1 - pArq^kd * (q)^(-1 * kd * (1 + delta));
-        % term4 = 1 - f - (q)^delta;
-        %
-        % dvp_Arq(fIter) = term1 - (term2 * term3) / term4;
 
 
-        %% ========= HARQ =========
         dvp_Harq(fIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
 
     end
 
-    % dvp_Arq(dvp_Arq>1)=1;
     dvp_Harq(dvp_Harq>1)=1;
     rate = (fList * pktLen / T ) .* (1-dvp_Harq);
    

@@ -1,7 +1,4 @@
 function [snrTable_dB, blerTable, cbsUsed] = getLenaTable_EESM_BG2(mcsIndex)
-% Generated from nr-eesm-t1.cc (BG TYPE 2, BlerForSinr1)
-% mcsIndex: MCS index supported by the table
-% cbsUsed: fixed CBS value used by this table
 cbsUsed = 984;
 switch mcsIndex
     case 0

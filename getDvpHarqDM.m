@@ -12,8 +12,6 @@ function [dvp] = getDvpHarqDM(d, delta, pHarq, f, T, M, Qmax, tau)
         if k_d <= 0
             failProb = 1;
         else
-            % if pHarq is cumulative BLER, use failProb = pHarq(k_d)
-            % if pHarq is conditional failure probability, use product
             failProb = prod(pHarq(1:k_d));
         end
 

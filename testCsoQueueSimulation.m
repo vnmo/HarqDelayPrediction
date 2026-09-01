@@ -1,5 +1,4 @@
 function tests = testCsoQueueSimulation
-%TESTCSOQUEUESIMULATION Check decoding, FIFO, admission, and complete cohorts.
 tests = functiontests(localfunctions);
 end
 
@@ -35,8 +34,6 @@ verifyEqual(testCase,s.successfulPackets,0);
 end
 
 function testPendingRetriesRemainFifoAcrossBlockage(testCase)
-% Packet 1 is ready at slot 4, which is blocked. Packet 2 becomes ready
-% at slot 5 and must not move ahead of packet 1.
 [~,count,latency,~,drops,s] = simulate_queue_IR_cso(true,1,[1,0],1,4,2,4,2,true);
 verifyEqual(testCase,s.txSlot,[1,2,5,6]);
 verifyEqual(testCase,s.txPacketId,[1,2,1,2]);
@@ -52,7 +49,6 @@ function testRetriesHavePriorityOverFirstTransmissions(testCase)
 atFour = find(s.txSlot==4,1);
 verifyEqual(testCase,s.txPacketId(atFour),1);
 verifyEqual(testCase,s.txAttempt(atFour),2);
-% Packet 4 arrived at that boundary but has lower priority than the retry.
 verifyGreaterThan(testCase,s.firstTxSlot(4),4);
 end
 
@@ -145,8 +141,6 @@ verifyError(testCase,@() simulate_queue_IR_cso(true,0.3,[0.2,0.1],1,8,10,2,1,fal
 end
 
 function testAgainstIndependentPacketLedger(testCase)
-% The reference scans packet records for due events instead of using ring
-% buffers, and sorts ready packets instead of maintaining a priority list.
 for seed = [1,30]
     for priority = [false,true]
         for stages = [0,1,2]
@@ -169,7 +163,6 @@ end
 end
 
 function result = packetLedger(priority,f,p,feedback,xi,N,Qmax,decoding)
-% Status: 1 ready, 2 decoding, 3 awaiting feedback, 4 terminal.
 status = zeros(1,N); % Zero denotes an unused packet record.
 arrival = zeros(1,N);
 count = zeros(1,N);

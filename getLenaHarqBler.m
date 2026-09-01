@@ -1,11 +1,7 @@
 function [expectedBlerVector] = getLenaHarqBler( ...
         iterLen, mcsIndex, snrRcvd_avg, hvar, M_Harq, ...
         bgType, cbsTarget, Nrb)
-%GETLENAHARQBLER Auto-generated from UlRxPacketTrace (par=3, srs=80 fixed)
-% expectedBlerVector = [p0, p1, p2, p3] where p_k is mean TBLER for rv=k
-% NOTE: SINR is taken from folder name sinr*_par3_srs80 (file SINR(dB) ignored).
 
-%#ok<*INUSD>
 sinrDb = round(snrRcvd_avg); % assume caller passes ~folder SINR(dB)
 expectedBlerVector = [NaN, NaN, NaN, NaN];
 
@@ -74,36 +70,6 @@ switch sinrDb
         end
 
     
-        % switch mcsIndex
-        %     case 0
-        %         expectedBlerVector = [0.000000, 0.000000, 0.000000, 0.000000];
-        %     case 1
-        %         expectedBlerVector = [0.000000, 0.000000, 0.000000, 0.000000];
-        %     case 2
-        %         expectedBlerVector = [0.000007, 0.000000, 0.000000, 0.000000];
-        %     case 3
-        %         expectedBlerVector = [0.000020, 0.327249, 0.636890, 0.415332];
-        %     case 4
-        %         expectedBlerVector = [0.000064, 0.145433, 0.687026, 0.442063];
-        %     case 5
-        %         expectedBlerVector = [0.000148, 0.109479, 0.501877, 0.388660];
-        %     case 6
-        %         expectedBlerVector = [0.000261, 0.152633, 0.231052, 0.404435];
-        %     case 7
-        %         expectedBlerVector = [0.000557, 0.119758, 0.390880, 0.290148];
-        %     case 8
-        %         expectedBlerVector = [0.001060, 0.070281, 0.651047, 0.208989];
-        %     case 9
-        %         expectedBlerVector = [0.001448, 0.091994, 0.414559, 0.349561];
-        %     case 12
-        %         expectedBlerVector = [0.001278, 0.397253, 0.887322, 0.688052];
-        %     case 14
-        %         expectedBlerVector = [0.002623, 0.205291, 0.917859, 0.702467];
-        %     case 20
-        %         expectedBlerVector = [0.008444, 0.311557, 0.915824, 0.814858];
-        %     otherwise
-        %         error('No table is available for SINR=%d dB, MCS %d.', sinrDb, mcsIndex);
-        % end
 
     otherwise
         error('Table Error [No Table]: SINR=%d dB', sinrDb);

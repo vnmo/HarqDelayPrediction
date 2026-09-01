@@ -1,21 +1,6 @@
 function [QLenPmf, details] = getQLenPmfCSO(pVector, f, M, Qmax, CSO)
-%GETQLENPMFCSO Proposed model: auxiliary (q,m,k_xi) queue DTMC.
-% The transitions implement the manuscript's Table 2, including M=1.
-% q is the maintained-packet count in the auxiliary approximation; m
-% selects the conditional PER p(m); k_xi is the current CSP phase.
-% A row is observed before the arrival decision. An arrival seeing Qmax
-% is rejected even if a packet leaves in that slot. At m=M, either outcome
-% removes the modeled packet. Decoding/feedback delays enter service
-% analysis separately; this DTMC does not store individual process timers.
-%
-% CSO=1/xi, where xi is an integer number of slots. Phase zero is blocked;
-% every transition advances k_xi to mod(k_xi+1,xi). CSO=0 disables blockage
-% and uses one data phase. QLenPmf(q+1) sums the joint PMF over m and phase.
-%
-% Optional details.P and details.stationary expose the stored matrix and
-% joint PMF. MATLAB index = k_xi*(Qmax+1)*M + q*M + m, i.e., the paper's
-% zero-based index plus one. Placeholder (0,m>1,k_xi) rows go to (0,1,next
-% phase) and have zero stationary mass.
+% Inputs: conditional PER vector pVector, arrival probability f, attempt limit M, population cap Qmax, and CSO.
+% Outputs: queue-length distribution QLenPmf and optional state details.
 
 validateattributes(M, {'numeric'}, {'scalar','real','finite','integer','positive'});
 validateattributes(Qmax, {'numeric'}, {'scalar','real','finite','integer','positive'});
@@ -39,7 +24,6 @@ else
     end
 end
 
-% Construct the data-slot and blocked-slot rows in Cartesian (q,m) order.
 L = (Qmax+1)*M;
 dataSlot = zeros(L);
 blockedSlot = zeros(L);
@@ -56,7 +40,6 @@ for q = 0:Qmax
     for m = attempts
         row = q*M+m;
 
-        % CS-blocked slot: admit an arrival only when q<Qmax.
         if q < Qmax
             blockedSlot(row,row) = 1-f;
             blockedSlot(row,(q+1)*M+m) = f;
@@ -65,7 +48,6 @@ for q = 0:Qmax
         end
 
         if q == 0
-            % An admitted arrival can use this data slot immediately.
             if M == 1
                 dataSlot(row,1) = 1; % Success or final-attempt discard.
             else
@@ -73,7 +55,6 @@ for q = 0:Qmax
                 dataSlot(row,M+2) = f*p(1);
             end
         elseif q == Qmax
-            % Arrival-first full boundary: no replacing arrival is admitted.
             if m == M
                 dataSlot(row,(q-1)*M+1) = 1;
             else
@@ -81,7 +62,6 @@ for q = 0:Qmax
                 dataSlot(row,q*M+m+1) = p(m);
             end
         else
-            % Interior: combine the arrival with success, failure, or cap.
             for arrival = 0:1
                 arrivalProbability = (1-arrival)*(1-f)+arrival*f;
                 if m == M
@@ -106,9 +86,6 @@ else
     firstSlot = blockedSlot(validBase,validBase);
 end
 
-% Solve one complete CSP cycle at phase zero, then propagate its phase
-% distributions. This solves the periodic chain without ordinary P^n
-% convergence or a dense matrix of size ((Qmax+1)*M*xi)^2.
 cycle = firstSlot*(D^(xi-1));
 phaseZero = stationaryFromEmpty(cycle);
 phaseConditional = zeros(numel(validBase),xi);
@@ -145,9 +122,6 @@ end
 end
 
 function stationary = stationaryFromEmpty(P)
-% For endpoint parameters the cycle may have several closed classes.
-% Use their absorption weights from the empty state instead of choosing
-% an arbitrary unit eigenvector. This also handles periodic closed classes.
 P = P./sum(P,2);
 graphP = digraph(sparse(P>0));
 reachable = sort(bfsearch(graphP,1));

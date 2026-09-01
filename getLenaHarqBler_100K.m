@@ -1,11 +1,7 @@
 function [expectedBlerVector] = getLenaHarqBler( ...
         iterLen, mcsIndex, snrRcvd_avg, hvar, M_Harq, ...
         bgType, cbsTarget, Nrb)
-%GETLENAHARQBLER Auto-generated from UlRxPacketTrace (par=3, srs=80 fixed)
-% expectedBlerVector = [p0, p1, p2, p3] where p_k is mean TBLER for rv=k
-% NOTE: SINR is taken from folder name sinr*_par3_srs80 (file SINR(dB) ignored).
 
-%#ok<*INUSD>
 sinrDb = round(snrRcvd_avg); % assume caller passes ~folder SINR(dB)
 expectedBlerVector = [NaN, NaN, NaN, NaN];
 

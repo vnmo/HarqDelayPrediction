@@ -10,7 +10,7 @@ This script could be used as a starting point to refer to all other script and t
 ### CSO implementation guide
 
 The Proposed model is implemented by `getDvpHarqCSO`, `getQLenPmfCSO`,
-`getWaitPmfCSO`, and `getServiceDvpCSO`. Queueing simulation is implemented
+`getWaitFunctionCSO`, and `getServiceDvpCSO`. Queueing simulation is implemented
 separately by `simulate_queue_IR_cso`. The analytical queue uses
 `(q,m,k_xi)` with a deterministic CSP-phase advance and arrival-first
 full-buffer transitions. The simulator releases capacity at decoding
@@ -58,7 +58,7 @@ bler_vs_dByRttRatio;
 
 ### Notes on key parameters/assumptions
 - **Sloting:** `T = 1e-3` assumes µ=0 (15 kHz SCS). Adjust if you change numerology. Other numerologies would be handled by adjusting T; however is not tested.
-- **`Nre` (REs):** Uses **15 symbols** in time (excludes CP and typical control/DMRS overhead). This over-approximates usable REs; adjust to your DMRS/PDCCH/PTRS settings if needed.  
+- **`Nre` (REs):** Uses **15 symbols** in time (excludes CP and typical control/DMRS overhead). This can exceed the usable RE count; adjust to your DMRS/PDCCH/PTRS settings if needed.  
 - **`B` (Bandwidth):** Assumes full 180 kHz per RB per slot (12*15=180) is occupied by the data transmission. This is **effective used BW**, not carrier bandwidth.  
 - **MCS:** Table 1 by default; see `parseMcs.m` for mapping.
 

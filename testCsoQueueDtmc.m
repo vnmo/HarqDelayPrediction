@@ -1,5 +1,4 @@
 function tests = testCsoQueueDtmc
-%TESTCSOQUEUEDTMC Check Table 2 rows, phase advance, and stationary solution.
 tests = functiontests(localfunctions);
 end
 
@@ -59,8 +58,6 @@ end
 end
 
 function testOneAttemptManualDistribution(testCase)
-% With Qmax=M=1, a data slot clears the auxiliary state. Only the phase
-% immediately after blockage can contain a packet, with probability f.
 for xi = [2,3,8,80]
     for f = [0,0.3,1]
         for p = [0,0.4,1]
@@ -133,7 +130,6 @@ for M = [1,2,4]
         end
     end
 end
-% Several absorbing states exist here; empty initialization selects q=0.
 verifyEqual(testCase,getQLenPmfCSO(0,1,1,4,0),[1,0,0,0,0]);
 end
 
@@ -157,8 +153,6 @@ verifyError(testCase,@() getQLenPmfCSO([0.5,0.3],0.3,3,3,1/8),'CSO:InvalidPERLen
 end
 
 function P = tableMatrix(p,f,M,Qmax,CSO)
-% Independent transcription of Table 2's displayed rows, not the
-% implementation's arrival/outcome enumeration or cycle construction.
 if CSO == 0
     xi = 1;
 else

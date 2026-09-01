@@ -1,15 +1,6 @@
 function serviceDvp = getServiceDvpCSO(residualSlots, tau_d, tau_f, pHarq, M, CSO)
-%GETSERVICEDVPCSO Proposed model: phase-averaged service DVP approximation.
-% This function evaluates the service-delay formulas, not packet events
-% from simulate_queue_IR_cso. Decoding and feedback enter through RTT and
-% the feasible-attempt counts; no per-process timers are stored here.
-% residualSlots is the deadline remaining after waiting, in slots.
-% tau_d and tau_f are raw decoding and feedback delays, in slots. Each is
-% rounded up before forming RTT. A successful last attempt completes after
-% decoding, without its final feedback delay in the deadline budget.
-% pHarq contains conditional PERs; a scalar is repeated for M attempts.
-% The output has the shape of residualSlots. Discards count as violations.
-% CSO=1/xi; CSO=0 disables blockage. The model requires M*RTT < xi.
+% Inputs: residual slot budget, decoding delay tau_d, feedback delay tau_f, conditional PER pHarq, attempt limit M, and CSO.
+% Output: service-delay upper bound serviceDvp.
 
 validateattributes(residualSlots, {'numeric'}, {'real','nonnan'});
 validateattributes(tau_d, {'numeric'}, {'scalar','real','finite','nonnegative'});
@@ -29,16 +20,13 @@ tau_f = ceil(tau_f);
 RTT = 1 + tau_d + tau_f;
 if CSO > 0 && M * RTT >= 1 / CSO
     error('CSO:ServiceSingleBlockage', ...
-        'The service-delay approximation requires M*RTT < 1/CSO.');
+        'The service-delay upper bound requires M*RTT < 1/CSO.');
 end
 
-% Feasible attempt counts without/with one CS-blocked slot. alpha is the
-% phase-averaged mixture weight, not a simulated CSP-phase observation.
 M_noCS = min(M, max(0, floor((residualSlots + tau_f) / RTT)));
 M_CS = min(M, max(0, floor((residualSlots + tau_f - 1) / RTT)));
 alpha = min(1, M_noCS * CSO);
 
-% Entry one is the empty product, so zero feasible attempts gives DVP=1.
 failureProduct = [1, cumprod(p)];
 failureNoCS = reshape(failureProduct(M_noCS(:)+1), size(residualSlots));
 failureCS = reshape(failureProduct(M_CS(:)+1), size(residualSlots));

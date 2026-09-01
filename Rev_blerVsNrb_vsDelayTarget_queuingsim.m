@@ -1,14 +1,7 @@
-% Queueing simulation: sensitivity sweeps for RTT, M, and Qmax.
-% runQueueSensitivity calls simulate_queue_IR_cso, not the Proposed DTMC.
-% Outputs are *Simulation.csv under resultRoot. The analytical counterpart
-% is Rev_blerVsNrb_vsDelayTarget, which saves *Theory.csv.
-% k_xi is the CSP length; the simulator derives phase from its slot clock.
-% Scenario settings are defined below. simLen is a slot count.
 close all;
 clearvars;
 clc;
 
-%% Common settings
 delayTargetMs = [2 3 5 6 8 10];
 
 SNRdb_avgRcvd = 10;
@@ -24,22 +17,17 @@ T = 1e-3;
 pktLen = 8 * 108;
 hvar = 1;
 
-%% Default HARQ/queue settings
 defaultM = 4;
 defaultRtt = 3;       % slots: 1 Tx + 1 decoding + feedback
 defaultQmax = 16;
 
-%% Sensitivity ranges
-rttList = [3 4 5 6];%[2 4 6 8 10];       % HARQ RTT in slots
-MList = 1:4; %1:4;
-QmaxList = [1 2 4 8 16];%[4 8 12 16];
+rttList = [3 4 5 6]; % HARQ RTT in slots
+MList = 1:4; % Maximum HARQ attempts
+QmaxList = [1 2 4 8 16]; % Population caps
 resultRoot = "queueing_results_rtt3_phase_fifo";
 
-%% 1. HARQ RTT sensitivity
 for rttSlots = rttList
 
-    % RTT consists of one transmission slot, one decoding slot,
-    % and the feedback delay.
     feedbackDelay = rttSlots - 2;
 
     outputFolder = fullfile( ...
@@ -65,7 +53,6 @@ for rttSlots = rttList
         defaultQmax);
 end
 
-%% 2. Maximum HARQ-attempt sensitivity
 for M_Harq = MList
 
     feedbackDelay = defaultRtt - 2;
@@ -93,7 +80,6 @@ for M_Harq = MList
         defaultQmax);
 end
 
-%% 3. Qmax sensitivity
 for maxQueueSize = QmaxList
 
     feedbackDelay = defaultRtt - 2;
@@ -138,10 +124,7 @@ function runQueueSensitivity( ...
     M_Harq, ...
     feedbackDelay, ...
     maxQueueSize)
-    % Queueing-simulation helper for one sensitivity setting. The returned
-    % packet latencies are compared with each configured delay target.
 
-    %% Operating-point folder
     operatingFolder = fullfile( ...
         outputFolder, ...
         "sinr" + string(SNRdb_avgRcvd) + ...
@@ -152,7 +135,6 @@ function runQueueSensitivity( ...
         mkdir(operatingFolder);
     end
 
-    %% Feasible PRB range
     [~, ~, etaMax] = parseMcs(28, 1);
     Nrb_min = ceil(pktLen / (134.16 * etaMax));
 
@@ -161,14 +143,12 @@ function runQueueSensitivity( ...
 
     NrbList = Nrb_min:Nrb_max;
 
-    %% One row per delay target
     dvp_Harq_sim = zeros(length(delayTargetMs), length(NrbList));
 
     for nrbIter = 1:length(NrbList)
 
         Nrb = NrbList(nrbIter);
 
-        %% Select minimum feasible MCS
         etaReq = pktLen / (134 * Nrb);
         mcs = [];
 
@@ -185,7 +165,6 @@ function runQueueSensitivity( ...
             error("No feasible MCS found for Nrb = %d", Nrb);
         end
 
-        %% PER vector from 5G-LENA table
         p_Harq_all = getLenaHarqBler( ...
             simLen, ...
             mcs, ...
@@ -205,7 +184,6 @@ function runQueueSensitivity( ...
 
         p_Harq = p_Harq_all(1:M_Harq);
 
-        %% Queue simulation
         [~, ~, totalLatency_sim, ~, numDroppedPkts] = ...
             simulate_queue_IR_cso( ...
                 isReTxPrioritised, ...
@@ -218,10 +196,6 @@ function runQueueSensitivity( ...
                 M_Harq, ...
                 isDetArr);
 
-        %% Calculate DVP for all delay targets
-        % All admitted packets are drained before return. Their latencies
-        % plus admission drops cover every generated packet; discards
-        % have Inf latency and violate each finite deadline.
         for dIter = 1:length(delayTargetMs)
 
             delayTargetSlots = ...
@@ -236,7 +210,6 @@ function runQueueSensitivity( ...
         end
     end
 
-    %% Save using the existing file convention
     for dIter = 1:length(delayTargetMs)
 
         writematrix( ...

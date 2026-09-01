@@ -1,40 +1,5 @@
 function [QLenPmf, P] = getQLenPmfDM(pVector, f, M, Qmax, slotCap)
-%GETQLENPMFDM
-% Queue length PMF for deterministic-service abstraction with HARQ.
-%
-% INPUTS
-%   pVector  : scalar or length-M vector
-%              pVector(m) = failure probability at HARQ attempt m
-%   f        : arrival rate (Bernoulli arrival probability per slot)
-%   M        : maximum HARQ attempts
-%   Qmax     : maximum queue length
-%   slotCap  : service capacity per slot
-%   pktSize  : packet size
-%
-% OUTPUTS
-%   QLenPmf  : PMF of queue length q = 0..Qmax
-%   P        : transition probability matrix
-%
-% MODEL
-%   rho = pktSize / slotCap
-%
-%   If rho >= 1:
-%       one transmission attempt takes either floor(rho) or ceil(rho) slots
-%       so an HOL packet occupies the server for multiple slots.
-%
-%   If rho < 1:
-%       one slot can serve either floor(1/rho) or ceil(1/rho) packets
-%
-%   HARQ:
-%       - success at attempt m with probability 1-p(m)
-%       - failure with probability p(m)
-%       - after attempt M, packet departs regardless (success/drop)
-%
-% NOTE
-%   This is a single-server abstraction for queue-length PMF.
-%   It does NOT model parallel HARQ processes separately.
     pktSize = 8*108;
-    %% parse pVector
     if isscalar(pVector)
         p = repmat(pVector, 1, M);
     elseif numel(pVector) == M
@@ -50,7 +15,6 @@ function [QLenPmf, P] = getQLenPmfDM(pVector, f, M, Qmax, slotCap)
         error('slotCap and pktSize must be positive.');
     end
 
-    %% service abstraction
     rho = pktSize / slotCap;
 
     if rho >= 1
@@ -86,15 +50,6 @@ function [QLenPmf, P] = getQLenPmfDM(pVector, f, M, Qmax, slotCap)
         Smax = 1;
     end
 
-    %% state
-    % state = (q, m, s)
-    % q = 0..Qmax
-    % m = 1..M   (HARQ attempt of HOL)
-    % s = 1..Smax
-    %     multi_slot: remaining slots to finish current attempt
-    %     multi_packet: dummy = 1 only
-    %
-    % when q=0, only (m=1,s=1) is meaningful
 
     L = (Qmax + 1) * M * Smax;
     idx = @(q,m,s) q*(M*Smax) + (m-1)*Smax + s;
@@ -102,13 +57,11 @@ function [QLenPmf, P] = getQLenPmfDM(pVector, f, M, Qmax, slotCap)
     rows_j = cell(L,1);
     rows_v = cell(L,1);
 
-    %% build transitions
     for q = 0:Qmax
         for m = 1:M
             for s = 1:Smax
                 s1 = idx(q,m,s);
 
-                % unreachable empty states
                 if q == 0 && ~(m == 1 && s == 1)
                     rows_j{s1} = s1;
                     rows_v{s1} = 1;
@@ -131,7 +84,6 @@ function [QLenPmf, P] = getQLenPmfDM(pVector, f, M, Qmax, slotCap)
         end
     end
 
-    %% assemble P
     nnzTotal = 0;
     for i = 1:L
         nnzTotal = nnzTotal + numel(rows_j{i});
@@ -155,14 +107,12 @@ function [QLenPmf, P] = getQLenPmfDM(pVector, f, M, Qmax, slotCap)
 
     P = sparse(ii, jj, vv, L, L);
 
-    %% sanity
     rowSums = full(sum(P,2));
     maxDev = max(abs(rowSums - 1));
     if maxDev > 1e-10
         warning('Transition matrix row sums deviate from 1. Max deviation = %g', maxDev);
     end
 
-    %% steady-state
     if L <= 2000
         [V,D] = eig(full(P.'));
         vec = [];
@@ -199,7 +149,6 @@ function [QLenPmf, P] = getQLenPmfDM(pVector, f, M, Qmax, slotCap)
     vec(vec < 0 & abs(vec) < 1e-12) = 0;
     vec = vec / sum(vec);
 
-    %% marginalize over m,s
     QLenPmf = zeros(1, Qmax+1);
     for q = 0:Qmax
         total = 0;
@@ -212,17 +161,12 @@ function [QLenPmf, P] = getQLenPmfDM(pVector, f, M, Qmax, slotCap)
     end
 end
 
-%% ============================================================
 function mp = stepMultiSlot(q, m, s, p, f, M, Qmax, serviceTimes, serviceProbs, Smax, idx, mp)
-% rho >= 1
-% one attempt takes multiple slots
 
-    % Bernoulli arrival at end of slot
     arrivals = [0 1];
     arrProbs = [1-f, f];
 
     if q == 0
-        % empty queue: if arrival occurs, start fresh packet
         for ia = 1:2
             a = arrivals(ia);
             pa = arrProbs(ia);
@@ -236,7 +180,6 @@ function mp = stepMultiSlot(q, m, s, p, f, M, Qmax, serviceTimes, serviceProbs, 
                     pd = serviceProbs(k);
 
                     if dur == 1
-                        % attempt completes within this slot
                         if m < M %#ok<*NASGU>
                             sSucc = idx(0,1,1);
                             sFail = idx(1,2,1);
@@ -256,9 +199,7 @@ function mp = stepMultiSlot(q, m, s, p, f, M, Qmax, serviceTimes, serviceProbs, 
         return;
     end
 
-    % q >= 1
     if s > 1
-        % attempt still ongoing, one slot consumed
         for ia = 1:2
             a = arrivals(ia);
             pa = arrProbs(ia);
@@ -269,23 +210,19 @@ function mp = stepMultiSlot(q, m, s, p, f, M, Qmax, serviceTimes, serviceProbs, 
         return;
     end
 
-    % s == 1: current attempt completes in this slot
     for ia = 1:2
         a = arrivals(ia);
         pa = arrProbs(ia);
 
-        % success
         qSucc = q - 1;
         qSucc = min(Qmax, qSucc + a);
         if qSucc == 0
             sSucc = idx(0,1,1);
         else
-            % next HOL starts new attempt with random service time
             for k = 1:numel(serviceTimes)
                 dur = serviceTimes(k);
                 pd = serviceProbs(k);
                 if dur == 1
-                    % immediately completes next HOL's first attempt in same slot is NOT allowed
                     sSucc2 = idx(qSucc,1,1);
                 else
                     sSucc2 = idx(qSucc,1,dur-1);
@@ -298,7 +235,6 @@ function mp = stepMultiSlot(q, m, s, p, f, M, Qmax, serviceTimes, serviceProbs, 
             mp = addProb(mp, sSucc, pa*(1-p(m)));
         end
 
-        % failure
         if m < M
             qFail = min(Qmax, q + a);
             for k = 1:numel(serviceTimes)
@@ -312,7 +248,6 @@ function mp = stepMultiSlot(q, m, s, p, f, M, Qmax, serviceTimes, serviceProbs, 
                 mp = addProb(mp, sFail, pa*p(m)*pd);
             end
         else
-            % drop after M
             qDone = q - 1;
             qDone = min(Qmax, qDone + a);
             if qDone == 0
@@ -334,13 +269,7 @@ function mp = stepMultiSlot(q, m, s, p, f, M, Qmax, serviceTimes, serviceProbs, 
     end
 end
 
-%% ============================================================
 function mp = stepMultiPacket(q, m, p, f, M, Qmax, slotCaps, slotCapProbs, idx, mp)
-% rho < 1
-% one slot can serve multiple packets, but same packet retransmission
-% within the same slot is NOT allowed.
-%
-% state only needs s=1 in this regime.
 
     arrivals = [0 1];
     arrProbs = [1-f, f];
@@ -366,7 +295,6 @@ function mp = stepMultiPacket(q, m, p, f, M, Qmax, slotCaps, slotCapProbs, idx, 
                 mCur = m;
             end
 
-            % serve up to K distinct packets once each
             qRemain = qIn;
             doneProbMap = containers.Map('KeyType','char','ValueType','double');
             doneProbMap('0_0') = 1.0; % key = "dep_retx"
@@ -431,7 +359,6 @@ function mp = stepMultiPacket(q, m, p, f, M, Qmax, slotCaps, slotCapProbs, idx, 
     end
 end
 
-%% ============================================================
 function mp = addProb(mp, key, val)
     if isKey(mp, key)
         mp(key) = mp(key) + val;

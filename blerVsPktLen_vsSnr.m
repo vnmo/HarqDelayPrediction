@@ -1,4 +1,3 @@
-% close all;
 clearvars -except h1 h2 h3;clc
 
 corder = colororder;
@@ -21,10 +20,8 @@ f=1/3;
 Nrb=10;
 Nre = Nrb *180;
 B = 180e3 * Nrb;
-% Select the minimum possible MCS to transfer the bits
 
 zeta = 1; % Decoding delay. A parameter designed later in the research.
-% So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
 
 d_Orig  = 8.5 * 1e-3;
 d  = d_Orig - zeta*1e-3;
@@ -62,18 +59,10 @@ for snrIter = 1:length(snr_avgRcvdArray)
         dataBits = Nre *eta;
 
 
-        %% =========ARQ========================================================
-        % PER computation.
-        %         % Shannon Outage
-        %         p(nrbIter)= 1-exp((1-exp(dataBits*log(2)/(T*B)))/(snr*var_hSquare));
-        % FBL Approximation
         pArq = getFblPer(simLen_MonteCarlo,snr_avgRcvd,eta,Nre,V,hvar);
 
-        % ARQ DVP with feedback delay (Theory)
-        % total delay closed form
         kd = floor(((d/T) + delta)/(1 + delta));
 
-        % Let
         q = pArq/(1 - f);
 
         term1 = pArq^kd;
@@ -83,10 +72,7 @@ for snrIter = 1:length(snr_avgRcvdArray)
 
         dvp_Arq(pktLenIter) = term1 - (term2 * term3) / term4;
 
-        %% =========HARQ========================================================
-        % PER computation.
         p_Harq = getFblPerVector_Harq(simLen_MonteCarlo,snr_avgRcvd,eta,Nre,V,hvar,M_Harq);
-        % DVP of with HARQ; (Truncated at M = 4)
         dvp_Harq(pktLenIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
 
     end
@@ -106,8 +92,6 @@ end
 
 figure(1)
 set(gca,'Fontsize',28)
-% titletext = "DVP(total) at $d = "+d*1000+"$ ms vs. allocated resources per slot.";
-% title(titletext,'fontsize',42,'interpreter','latex');
 grid on;
 legend( 'ARQ: SNR =  5 dB' , 'HARQ: SNR = 5 dB' ,...
         'ARQ: SNR =  10 dB' ,'HARQ: SNR = 10 dB' ,...
@@ -116,9 +100,6 @@ legend( 'ARQ: SNR =  5 dB' , 'HARQ: SNR = 5 dB' ,...
     'fontsize',32,'interpreter','latex','location','southeast','NumColumns',2,'Orientation','horizontal');
 xlabel('Packet Length (B)','fontsize',42,'interpreter','latex');
 ylabel('log$_{10}$(DVP)','fontsize',42,'interpreter','latex');
-% grid minor
-% ylim([-12,0])
-% xlim([0,10])
 
 
 figure(1)

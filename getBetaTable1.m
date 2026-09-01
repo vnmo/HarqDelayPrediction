@@ -1,5 +1,4 @@
 function beta = getBetaTable1(mcs)
-% getBetaTable1 : return optimal beta (Table 1) for given MCS (0~28)
 
 switch mcs
     case 0

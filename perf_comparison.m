@@ -21,7 +21,6 @@ f=1/3;
 
 delta = 2;
 zeta = 1; % Decoding delay. A parameter designed later in the research.
-% So it is not directly used. Instead d <- d-zeta, delta<- delta + zeta
 delta = delta+zeta;
 d_orig=d;
 d = d - zeta * T;
@@ -33,7 +32,6 @@ end
 SNRdb_avgRcvd = 10;
 snr_avgRcvd = 10.^(SNRdb_avgRcvd/10);
 
-%%eta is spectral efficiency
 [~, ~, etaMax] = parseMcs(28,1);
 Nrb_min = ceil(pktLen/(180*etaMax));
 [~, ~, etaMin] = parseMcs(0,1);
@@ -56,7 +54,6 @@ for nrbIter = 1:length(NrbList)
     Nre = Nrb *180;
     B = 180e3 * Nrb;
 
-    %Select the minimum possible MCS to transfer the bits
     etaMin = pktLen/(180*Nrb);
     eta=[];
     mcs=[];
@@ -71,12 +68,10 @@ for nrbIter = 1:length(NrbList)
 
     dataBits = Nre *eta;
 
-    %% ========= PER COMPUTATION =========
     pArq = getFblPer(simLen_MonteCarlo,snr_avgRcvd,eta,Nre,V,hvar);
     p_Harq = getFblPerVector_Harq(simLen_MonteCarlo,snr_avgRcvd,eta,Nre,V,hvar,M_Harq);
 
 
-    %% ========= ARQ =========
     kd = floor(((d/T) + delta)/(1 + delta));
     q = pArq/(1 - f); % Let
 
@@ -87,7 +82,6 @@ for nrbIter = 1:length(NrbList)
 
     dvp_Arq(nrbIter) = term1 - (term2 * term3) / term4;
 
-    %% ========= ARQ Simulation =========
     if (f > 1-pArq)
         dvp_Arq_sim(nrbIter) = 1;
     else
@@ -96,7 +90,6 @@ for nrbIter = 1:length(NrbList)
         dvp_Arq_sim(nrbIter) = (sum(latencyInSlotsVector > delaytargetInSlots))/length(latencyInSlotsVector);
     end
 
-    %% ========= Immediate Feedback (IF) w/o IR =========
     delta_temp = 0; % Make RTT = 1;
     
     kd = floor(((d_orig/T) + delta_temp)/(1 + delta_temp));
@@ -110,66 +103,21 @@ for nrbIter = 1:length(NrbList)
     dvp_Arq_IF(nrbIter) = term1 - (term2 * term3) / term4;
 
 
-    %% ========= HARQ =========
     dvp_Harq(nrbIter) = getDvpHarq (d, delta, p_Harq, f, T, M_Harq, Qmax_Harq);
 
-    %% ========= HARQ Simulation =========
     [~,~,latencyInSlotsVector,~] = simulate_queue_IR(isReTxPrioritised,f,p_Harq,delta,simLen,Qmax_Harq,M_Harq,false);
 
     delaytargetInSlots = (d/T);
     dvp_Harq_sim(nrbIter) = (sum(latencyInSlotsVector > delaytargetInSlots))/length(latencyInSlotsVector);
 
-    %% ========= Immediate Feedback (IF) with IR =========
     delta_temp = 0; % Make RTT = 1;
     dvp_Harq_IF(nrbIter) = getDvpHarq (d_orig, delta_temp, p_Harq, f, T, M_Harq, Qmax_Harq);
 
 
-    % %% ========= Immediate Feedback (IF) w/o IR Simulation =========
-    % if (f > 1-pArq)
-    %     dvp_Arq_IF_sim(nrbIter) = 1;
-    % else
-    %     delta_temp = 0; % Make RTT = 1;
-    %
-    %     [~,~,latencyInSlotsVector,~] = simulate_queue_noIR(isReTxPrioritised,f,pArq,delta_temp,simLen,Qmax,M,false);
-    %     delaytargetInSlots = (d/T);
-    %     dvp_Arq_IF_sim(nrbIter) = (sum(latencyInSlotsVector > delaytargetInSlots))/length(latencyInSlotsVector);
-    % end
-    %
-
-    % %% ========= Transmit-After-Feedback (TAF) w/o IR =========
-    % delta_temp = 0; % Make RTT = 1;
-    % T_temp = (1+delta)*T;   % Make slotlength = RTT slots instead of 1.
-    % d_temp = d + delta * T;
-    % f_temp = (delta+1)*f;
-    % if (f_temp>1-pArq)
-    %     dvp_Arq_TAF(nrbIter)=1;
-    % else
-    %     kd = floor(((d_temp/T_temp) + delta_temp)/(1 + delta_temp));
-    %     q = pArq/(1 - f_temp); % Let
-    % 
-    %     term1 = pArq^kd;
-    %     term2 = f_temp * (q)^(floor(d_temp/T_temp) + delta_temp);
-    %     term3 = 1 - pArq^kd * (q)^(-1 * kd * (1 + delta_temp));
-    %     term4 = 1 - f_temp - (q)^delta_temp;
-    % 
-    %     dvp_Arq_TAF(nrbIter) = term1 - (term2 * term3) / term4;
-    % end
 
 
 
-    %
-    % %% ========= Transmit-After-Feedback (TAF) w/o IR Simulation =========
-    % if (f > 1-pArq)
-    %     dvp_Arq_TAF_sim(nrbIter) = 1;
-    % else
-    %     delta_temp = 0;         % Make RTT=1
-    %     [~,~,latencyInSlotsVector,~] = simulate_queue_noIR(isReTxPrioritised,f,pArq,delta_temp,simLen,Qmax,M,false);
-    %
-    %     T_temp = (1+delta)*T;   % Make slotlength = RTT slots instead of 1.
-    %     latencyVector_temp = latencyInSlotsVector * T_temp;
-    %     delaytarget_temp = d + delta * T;
-    %     dvp_Arq_TAF_sim(nrbIter) = (sum(latencyVector_temp > delaytarget_temp))/length(latencyInSlotsVector);
-    % end
+
 
 
 end
@@ -180,10 +128,8 @@ dvp_Harq(dvp_Harq>1)=1;
 dvp_Harq_sim(dvp_Harq_sim>1)=1;
 dvp_Arq_IF(dvp_Arq_IF>1)=1;
 dvp_Harq_IF(dvp_Harq_IF>1)=1;
-% dvp_Arq_TAF(dvp_Arq_TAF>1)=1;
 
 
-% plot(NrbList,log10(dvp_Arq_TAF))
 
 corder = colororder;
 lineOrder = ["-","--",":","-","--",":","-."];
