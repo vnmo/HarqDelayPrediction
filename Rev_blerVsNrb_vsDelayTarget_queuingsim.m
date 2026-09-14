@@ -23,7 +23,7 @@ defaultQmax = 16;
 
 rttList = [3 4 5 6]; % HARQ RTT in slots
 MList = 1:4; % Maximum HARQ attempts
-QmaxList = [1 2 4 8 16]; % Population caps
+QmaxList = [4, 8, 16, 32]; % Maximum aggregate packet counts
 resultRoot = "queueing_results_rtt3_phase_fifo";
 
 for rttSlots = rttList

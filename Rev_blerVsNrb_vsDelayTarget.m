@@ -134,7 +134,7 @@ f_inverse_list = [3];
 sinr_list = [10];
 srs_list = [80];
 
-Qmax_Harq_list = [1 2 4 8 16];
+Qmax_Harq_list = [4 8 16 32];
 
 for Qmax_Harq_index = 1:length(Qmax_Harq_list)
     for sinr_index = 1:length(sinr_list)

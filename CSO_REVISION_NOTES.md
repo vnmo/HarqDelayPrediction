@@ -5,11 +5,11 @@ is saved in `HarqDelayPrediction-main_before_CSO_20260831.zip`.
 
 ## Scope
 
-This revision implements the manuscript's auxiliary CSP-phase DTMC and
+This revision implements the manuscript's CSP-phase DTMC and
 aligns the packet queueing simulation with decoding-completion release,
 FIFO retransmission priority, and a complete generated-packet cohort.
 The waiting and service formulas use a phase-averaged upper-bound
-construction under the stated auxiliary-model assumptions; they are not
+construction under the stated model assumptions; they are not
 replaced by a per-process analytical model.
 
 The source files before this numerical change are saved separately in
@@ -20,8 +20,8 @@ defined in the sweep scripts. Their output folders are listed below.
 
 | File | Role |
 |---|---|
-| `getDvpHarqCSO.m` | Proposed model: combine auxiliary overflow, waiting, and service upper bounds in the total DVP upper bound. |
-| `getQLenPmfCSO.m` | Proposed model: stationary auxiliary queue-length distribution from the `(q,m,k_xi)` DTMC. |
+| `getDvpHarqCSO.m` | Proposed model: combine arrival discard, waiting, and service terms in the total DVP upper bound. |
+| `getQLenPmfCSO.m` | Proposed model: stationary packet-count distribution from the `(q,m,k_xi)` DTMC. |
 | `getWaitFunctionCSO.m` | Proposed model: waiting-delay function given admission. |
 | `getWaitPmfCSO.m` | Compatibility wrapper for the historical name; its output is not a PMF. |
 | `getServiceDvpCSO.m` | Proposed model: phase-averaged service-violation upper bound using feasible-attempt counts. |
@@ -31,8 +31,9 @@ defined in the sweep scripts. Their output folders are listed below.
 
 In `getQLenPmfCSO`, the MATLAB index is
 `s=k_xi*(Qmax+1)*M+q*M+m`, one greater than the paper's zero-based index.
-`q` is the auxiliary maintained-packet count and `m` selects the conditional
-PER. `CSO=1/xi` specifies an integer period. Phase zero is blocked; every
+`q` is the aggregate packet count. It increases with an admitted arrival and
+decreases after successful decoding or discard following the final attempt.
+`m` selects the attempt-dependent conditional PER. `CSO=1/xi` specifies an integer period. Phase zero is blocked; every
 transition advances the phase modulo `xi`. A stored `(0,m>1,k_xi)` row goes
 to `(0,1,next phase)` and has zero stationary probability. `CSO=0` uses one
 data phase without blockage.
@@ -40,7 +41,7 @@ data phase without blockage.
 The solver forms the transition over one CSP cycle, solves its stationary
 distribution, and propagates that distribution through the individual
 phases. It then averages the joint probabilities over `m` and phase to
-obtain the queue-length distribution returned as `QLenPmf`. It does not
+obtain the packet-count distribution returned as `QLenPmf`. It does not
 replace the phase-dependent matrix by an
 average of the blocked and data-slot transitions. For endpoint parameters
 with several closed classes, their weights are determined from the empty
@@ -57,11 +58,11 @@ no separate finite-H process-allocation rule is added.
 
 At each slot boundary, the simulator performs these operations in order:
 
-1. Apply decoding outcomes whose processing interval has ended. Release
-   population capacity on success or final-attempt failure.
+1. Apply decoding outcomes whose processing interval has ended. Decrease
+   the aggregate packet count on success or final-attempt failure.
 2. Make packets whose feedback has arrived ready for retransmission.
 3. Generate arrivals, while within the configured arrival horizon, and
-   reject an arrival if the maintained population is full at that boundary.
+   reject an arrival if the maximum aggregate packet count has been reached.
 4. In a data slot, schedule at most one ready packet. Pending retries have
    priority and are FIFO by feedback-availability time. First transmissions
    are FIFO by arrival. With the priority flag disabled, all ready packets
@@ -74,9 +75,10 @@ that boundary can be used immediately. Outcomes are sampled at transmission
 but do not affect capacity or scheduling until their decoding event.
 CSO blocks data transmission, not decoding completion or feedback.
 
-The simulation's waiting output is arrival-to-first-transmission time, not
-the auxiliary waiting-delay function from `getWaitFunctionCSO`. Its DVP scripts use total
-latency and admission drops. Discards have infinite latency. `simLen`
+The simulation's waiting output is the accumulated contention delay before
+the initial transmission and between subsequent attempts when a packet is
+ready but cannot use the link. Its DVP scripts use total latency and arrival
+discards. HARQ discards have infinite latency. `simLen`
 specifies the number of slots in which arrivals are generated, not a fixed
 number of packets. After that horizon the loop drains all admitted packets
 to successful decoding or discard without adding arrivals. Therefore
@@ -89,13 +91,13 @@ up separately, as in the service-delay calculation.
 
 ### Boundary and measurement conventions
 
-At the full auxiliary buffer, an arriving packet is rejected even if a
+At the maximum aggregate packet count, an arriving packet is rejected even if a
 packet leaves in the same modeled slot. A success sends `(Qmax,m)` to
 `(Qmax-1,1)` without an arrival factor; at `m=M`, either outcome does so.
 The packet simulator releases completed packets at the boundary before
 testing a new arrival, but a transmission later in that slot cannot free
 capacity for the arrival. The DTMC still omits individual decoding and
-feedback timers, as required by the auxiliary model.
+feedback timers, as specified by the aggregate model.
 
 For `M=1`, the MATLAB queue function uses only `m=1`. From the empty state,
 the data-slot self-transition has probability one; in a blocked slot,
@@ -122,9 +124,10 @@ tests listed below do not establish those empirical results.
   admission. Entry `k+1` corresponds to `k` waiting slots. The function
   satisfies the manuscript's inequality, is not normalized as a PMF, and
   its sum may exceed one.
-- `pDrop` remains the auxiliary model's `pi_Qmax`, used as an auxiliary
-  overflow estimate rather than a physical buffer-occupancy identity.
-- The waiting-delay construction uses `fu(k) + beta_(k-1)*fu(k-1)`.
+- `pDrop` is `pi_Qmax`, the arrival-discard probability associated with
+  `q=Qmax` under the Bernoulli arrival model.
+- The waiting-delay construction uses
+  `(1-beta_k)*fu(k) + beta_k*fu(k-1)`.
   An additional array entry retains the last shifted upper-bound term.
 - Per-packet attempt counts are combined by convolution. This implements
   the waiting-count distribution without stopping at an intermediate zero.
@@ -169,7 +172,7 @@ the two failure products with weights `1-alpha` and `alpha`. The final
 successful decoding need not wait for its feedback to meet the deadline.
 Failure through all `M` attempts remains a violation even for a long deadline.
 
-The total DVP upper bound includes the auxiliary drop probability, the
+The total DVP upper bound includes the arrival-discard probability, the
 upper-bounded admitted waiting tail beyond the deadline, and the remaining
 service-violation upper bound. The last two terms are multiplied by the
 admission probability once, and the returned result is limited to one.
@@ -223,13 +226,14 @@ transcription of Table 2, compare the cycle solver with a full constrained
 stationary solve, and verify phase advance, unused states, full-buffer
 rejection, and sparse storage at the production CSP lengths.
 
-Simulation tests cover decoding-time capacity release, FIFO retries across
-blocked slots, immediate use of available feedback, separate rounding,
-draining, arrival conservation, and comparison with an independent packet
-ledger that scans and sorts events instead of using ring buffers and a
-maintained priority list. These are implementation checks.
+Simulation tests cover decoding-time packet-count updates, accumulated
+waiting before and between attempts, FIFO retries across blocked slots,
+immediate use of available feedback, separate rounding, draining, arrival
+conservation, and comparison with an independent packet ledger that scans
+and sorts events instead of using ring buffers and a maintained priority
+list. These are implementation checks.
 
-The 35 tests passed in MATLAB R2025a on 2026-09-01 after the waiting-delay
+The 35 tests passed in MATLAB R2025a on 2026-09-07 after the waiting-delay
 function and upper-bound changes. A separate 100,000-slot
 check using the stored PER input for 10 dB/MCS 9 generated 33,465 packets;
 all were admitted, 23 were discarded, and the remaining cohort finished

@@ -34,12 +34,13 @@ verifyEqual(testCase,s.successfulPackets,0);
 end
 
 function testPendingRetriesRemainFifoAcrossBlockage(testCase)
-[~,count,latency,~,drops,s] = simulate_queue_IR_cso(true,1,[1,0],1,4,2,4,2,true);
+[~,count,latency,waiting,drops,s] = simulate_queue_IR_cso(true,1,[1,0],1,4,2,4,2,true);
 verifyEqual(testCase,s.txSlot,[1,2,5,6]);
 verifyEqual(testCase,s.txPacketId,[1,2,1,2]);
 verifyEqual(testCase,s.txReadySince,[1,2,4,5]);
 verifyEqual(testCase,count,[2,2]);
 verifyEqual(testCase,latency,[6,6]);
+verifyEqual(testCase,waiting,[1,1]);
 verifyEqual(testCase,drops,0);
 verifyEqual(testCase,s.completionBoundary,[7,8]);
 end
@@ -169,6 +170,7 @@ count = zeros(1,N);
 first = zeros(1,N);
 finish = zeros(1,N);
 readyAt = zeros(1,N);
+waiting = zeros(1,N);
 decodeAt = zeros(1,N);
 outcome = false(1,N);
 discarded = false(1,N);
@@ -216,6 +218,7 @@ while t <= N || any(status>0 & status<4)
         end
         [~,order] = sortrows(keys);
         id = ready(order(1));
+        waiting(id) = waiting(id)+t-readyAt(id);
         if count(id)==0
             first(id) = t;
         end
@@ -235,6 +238,6 @@ packets = 1:numPackets;
 latency = finish(packets)-arrival(packets);
 latency(discarded(packets)) = Inf;
 result = struct('queue',queue,'count',count(packets),'latency',latency, ...
-    'waiting',first(packets)-arrival(packets),'drops',drops, ...
+    'waiting',waiting(packets),'drops',drops, ...
     'txSlot',txSlot,'txId',txId,'finish',finish(packets));
 end

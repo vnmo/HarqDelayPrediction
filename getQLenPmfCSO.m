@@ -1,6 +1,6 @@
 function [QLenPmf, details] = getQLenPmfCSO(pVector, f, M, Qmax, CSO)
-% Inputs: conditional PER vector pVector, arrival probability f, attempt limit M, population cap Qmax, and CSO.
-% Outputs: queue-length distribution QLenPmf and optional state details.
+% Inputs: conditional PER vector pVector, arrival probability f, attempt limit M, maximum aggregate packet count Qmax, and CSO.
+% Outputs: packet-count distribution QLenPmf and optional state details.
 
 validateattributes(M, {'numeric'}, {'scalar','real','finite','integer','positive'});
 validateattributes(Qmax, {'numeric'}, {'scalar','real','finite','integer','positive'});
@@ -49,7 +49,7 @@ for q = 0:Qmax
 
         if q == 0
             if M == 1
-                dataSlot(row,1) = 1; % Success or final-attempt discard.
+                dataSlot(row,1) = 1;
             else
                 dataSlot(row,1) = 1-f*p(1);
                 dataSlot(row,M+2) = f*p(1);

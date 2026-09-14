@@ -1,5 +1,5 @@
 
-## Referece publication
+## Reference publication
 https://arxiv.org/abs/2502.08789 
 
 ## Overview
@@ -7,18 +7,27 @@ MATLAB scripts to study Delay Violation Probability (DVP) for ARQ/HARQ under fin
 The top-level script is A0_Script_runAllCodes.m. It resets figures and runs a sequence of all plot generators based on what is commented and what is not. (see **Reproducing figures**).
 This script could be used as a starting point to refer to all other script and the internal functions contained within. The name of the subscripts is mostly self-explanatory after going through the README.
 
-### CSO implementation guide
+### CSO model and simulation
 
-The Proposed model is implemented by `getDvpHarqCSO`, `getQLenPmfCSO`,
-`getWaitFunctionCSO`, and `getServiceDvpCSO`. Queueing simulation is implemented
-separately by `simulate_queue_IR_cso`. The analytical queue uses
-`(q,m,k_xi)` with a deterministic CSP-phase advance and arrival-first
-full-buffer transitions. The simulator releases capacity at decoding
-completion, schedules ready retries in FIFO order, and drains admitted
-packets after arrivals stop. See [CSO_REVISION_NOTES.md](CSO_REVISION_NOTES.md) for the
-file roles, state variables, and corresponding run scripts. Current CSO
-scenario settings are in those scripts; the parameter examples below are
-general examples for the wider code collection.
+The proposed model is implemented by `getDvpHarqCSO`, `getQLenPmfCSO`,
+`getWaitFunctionCSO`, and `getServiceDvpCSO`. The model calculates the DVP
+upper bound from the packet-count distribution, waiting-delay function, and
+service-delay result. It uses the state `(q,m,k_xi)`, where `q` is the
+aggregate packet count, `m` selects the attempt-dependent PER, and `k_xi`
+tracks the CSP phase. `Qmax` is the maximum aggregate packet count.
+
+The MATLAB Queueing Simulation is implemented separately by
+`simulate_queue_IR_cso`. It allows another packet to be transmitted while a
+packet is awaiting decoding or feedback, gives ready retransmissions priority,
+and schedules ready retransmissions in FIFO order. Its waiting-delay output
+includes contention before the initial transmission and between subsequent
+transmission attempts. Its service-delay output includes the tagged packet's
+transmissions, decoding intervals, and feedback intervals except after the
+final attempt.
+
+The CSO figure and sensitivity-study scripts define their respective scenario
+settings. The parameter values below are general examples for the wider code
+collection.
 
 ## Requirements
 - MATLAB (tested on recent 2024b)
@@ -44,7 +53,7 @@ bler_vs_dByRttRatio;
 | `zeta` | Decoding/processing delay | slots | e.g., `zeta = 1` |
 | `Qmax` | Max queue size for **ARQ** | pkts | e.g., `Qmax = 100` |
 | `M` | Max retransmissions for **ARQ** (incl. first tx) | count | e.g., `M = 3` |
-| `Qmax_Harq` | Max queue size for **HARQ** | pkts | e.g., `Qmax_Harq = 100` |
+| `Qmax_Harq` | Maximum aggregate packet count for **HARQ** | pkts | e.g., `Qmax_Harq = 16` |
 | `M_Harq` | Max retransmissions for **HARQ** (incl. first tx) | count | e.g., `M_Harq = 3` |
 | `T` | Slot length (as per numerology) | s | `T = 1e-3` |
 | `hvar` | Channel power gain variance | – | `hvar = 1` |

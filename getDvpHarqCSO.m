@@ -1,5 +1,5 @@
 function dvp = getDvpHarqCSO(d, delta, pHarq, f, T, M, Qmax, CSO, zeta)
-% Inputs: deadline d, feedback delay delta, conditional PER pHarq, arrival probability f, slot duration T, attempt limit M, population cap Qmax, CSO, and decoding delay zeta.
+% Inputs: deadline d, feedback delay delta, conditional PER pHarq, arrival probability f, slot duration T, attempt limit M, maximum aggregate packet count Qmax, CSO, and decoding delay zeta.
 % Output: total DVP upper bound dvp.
 
 if nargin < 9

@@ -8,20 +8,22 @@ M = 3;
 Qmax = 4;
 CSO = 1/80;
 f = 0.4;
-qLengthDistribution = getQLenPmfCSO(p, f, M, Qmax, CSO);
+packetCountDistribution = getQLenPmfCSO(p, f, M, Qmax, CSO);
 [actual, drop] = getWaitFunctionCSO(p, f, M, Qmax, CSO);
 expected = zeros(1, M*(Qmax-1)+2);
 for q = 0:Qmax-1
     underlying = enumerateAttempts(q, M, p);
     for k = 0:numel(underlying)-1
-        weight = qLengthDistribution(q+1) ...
-            / (1-qLengthDistribution(end)) * underlying(k+1);
-        expected(k+1) = expected(k+1) + weight;
-        expected(k+2) = expected(k+2) + k*CSO*weight;
+        weight = packetCountDistribution(q+1) ...
+            / (1-packetCountDistribution(end)) * underlying(k+1);
+        betaCurrent = min(1, k*CSO);
+        betaNext = min(1, (k+1)*CSO);
+        expected(k+1) = expected(k+1) + (1-betaCurrent)*weight;
+        expected(k+2) = expected(k+2) + betaNext*weight;
     end
 end
 verifyEqual(testCase, actual, expected, 'AbsTol', 1e-12);
-verifyEqual(testCase, drop, qLengthDistribution(end), 'AbsTol', 1e-12);
+verifyEqual(testCase, drop, packetCountDistribution(end), 'AbsTol', 1e-12);
 end
 
 function testUnderlyingMatchesOriginalRecursion(testCase)
@@ -42,9 +44,7 @@ for M = [1, 2, 4]
             for CSO = [0, 1/80]
                 [waitFunction, drop] = getWaitFunctionCSO(0.4, f, M, Qmax, CSO);
                 verifyGreaterThanOrEqual(testCase, sum(waitFunction), 1-1e-12);
-                if CSO == 0
-                    verifyEqual(testCase, sum(waitFunction), 1, 'AbsTol', 1e-12);
-                end
+                verifyLessThanOrEqual(testCase, sum(waitFunction), 1+CSO+1e-12);
                 verifyGreaterThanOrEqual(testCase, min(waitFunction), 0);
                 verifyGreaterThanOrEqual(testCase, drop, 0);
                 verifyLessThanOrEqual(testCase, drop, 1);
@@ -63,14 +63,17 @@ p = [1, 1, 0.3];
 M = 3;
 Qmax = 4;
 CSO = 1/80;
-qLengthDistribution = getQLenPmfCSO(p, 0.4, M, Qmax, CSO);
+packetCountDistribution = getQLenPmfCSO(p, 0.4, M, Qmax, CSO);
 waitFunction = getWaitFunctionCSO(p, 0.4, M, Qmax, CSO);
-verifyEqual(testCase, waitFunction(2:3), [0, 0], 'AbsTol', 1e-12);
+verifyEqual(testCase, waitFunction(2), ...
+    CSO*packetCountDistribution(1)/(1-packetCountDistribution(end)), ...
+    'AbsTol', 1e-12);
+verifyEqual(testCase, waitFunction(3), 0, 'AbsTol', 1e-12);
 verifyGreaterThan(testCase, waitFunction(M+1), 0);
 lastK = M*(Qmax-1);
 verifyEqual(testCase, waitFunction(end), ...
-    lastK*CSO*qLengthDistribution(Qmax) ...
-    /(1-qLengthDistribution(end)), 'AbsTol', 1e-12);
+    (lastK+1)*CSO*packetCountDistribution(Qmax) ...
+    /(1-packetCountDistribution(end)), 'AbsTol', 1e-12);
 verifyGreaterThan(testCase, waitFunction(end), 0);
 verifyGreaterThan(testCase, sum(waitFunction), 1);
 end
@@ -78,11 +81,16 @@ end
 function testOneAttemptAndPERShapes(testCase)
 for per = [0, 0.4, 1]
     [waitFunction, drop] = getWaitFunctionCSO(per, 0.3, 1, 4, 1/80);
-    qLengthDistribution = getQLenPmfCSO(per, 0.3, 1, 4, 1/80);
-    base = qLengthDistribution(1:end-1) / (1-drop);
-    beta = (0:3)/80;
-    expected = [base, 0] + [0, beta.*base];
+    packetCountDistribution = getQLenPmfCSO(per, 0.3, 1, 4, 1/80);
+    base = packetCountDistribution(1:end-1) / (1-drop);
+    beta = (0:4)/80;
+    expected = [(1-beta(1:end-1)).*base, 0] ...
+        + [0, beta(2:end).*base];
     verifyEqual(testCase, waitFunction, expected, 'AbsTol', 1e-12);
+end
+p = [0, 0.4, 1];
+for per = p
+    verifyEqual(testCase, getWaitProbability(4, 4, per, 1), 1, 'AbsTol', 1e-12);
 end
 p = [0.5, 0.3, 0.1];
 verifyEqual(testCase, getWaitFunctionCSO(p, 0.3, 3, 4, 1/80), ...

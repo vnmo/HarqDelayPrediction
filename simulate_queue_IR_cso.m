@@ -2,8 +2,8 @@ function [queueSize, TxCount, totalLatencyInSlotsVector, waitLatencyInslotsVecto
     simulate_queue_IR_cso( ...
     isReTxPrioritised, p_arrival, perVector, feedbackDelay, k_xi, ...
     MaxNumSlots, maxQueueSize, MaxTxPerPkt, isDetArr, decodingDelay)
-% Inputs: retry priority, arrival probability, conditional PER vector, feedback delay, CSP length, slot count, population cap, attempt limit, arrival mode, and decoding delay.
-% Outputs: queue size, attempt counts, total and waiting delays, drop count, and event details.
+% Inputs: retry priority, arrival probability, conditional PER vector, feedback delay, CSP length, slot count, maximum aggregate packet count, attempt limit, arrival mode, and decoding delay.
+% Outputs: aggregate packet count, attempt counts, total and accumulated waiting delays, arrival-discard count, and event details.
 
 if nargin < 10
     decodingDelay = 1;
@@ -44,6 +44,8 @@ TxCount = zeros(1,MaxNumSlots);
 firstTxSlot = zeros(1,MaxNumSlots);
 completionBoundary = zeros(1,MaxNumSlots);
 discarded = false(1,MaxNumSlots);
+accumulatedWait = zeros(1,MaxNumSlots);
+readySince = zeros(1,MaxNumSlots);
 NumDroppedPkts = 0;
 numGenerated = 0;
 numAdmitted = 0;
@@ -60,7 +62,6 @@ feedbackPacket = zeros(1,feedbackRingLength);
 recordDetails = nargout > 5;
 if recordDetails
     populationBeforeArrival = zeros(1,MaxNumSlots);
-    readySince = zeros(1,MaxNumSlots);
     txSlotLog = [];
     txPacketLog = [];
     txAttemptLog = [];
@@ -103,9 +104,7 @@ while slotId <= MaxNumSlots || numPacketsInSystem > 0
         else
             readyIds(end+1) = pktId; %#ok<AGROW>
         end
-        if recordDetails
-            readySince(pktId) = slotId;
-        end
+        readySince(pktId) = slotId;
     end
 
     if slotId <= MaxNumSlots
@@ -128,9 +127,7 @@ while slotId <= MaxNumSlots || numPacketsInSystem > 0
                 numPacketsInSystem = numPacketsInSystem+1;
                 arrSlot(numAdmitted) = slotId;
                 readyIds(end+1) = numAdmitted; %#ok<AGROW>
-                if recordDetails
-                    readySince(numAdmitted) = slotId;
-                end
+                readySince(numAdmitted) = slotId;
             end
         end
     end
@@ -139,6 +136,7 @@ while slotId <= MaxNumSlots || numPacketsInSystem > 0
     if ~isCsoSlot && ~isempty(readyIds)
         pktId = readyIds(1);
         readyIds(1) = [];
+        accumulatedWait(pktId) = accumulatedWait(pktId)+slotId-readySince(pktId);
         if TxCount(pktId) == 0
             firstTxSlot(pktId) = slotId;
         elseif isReTxPrioritised
@@ -175,12 +173,13 @@ TxCount = TxCount(1:numAdmitted);
 firstTxSlot = firstTxSlot(1:numAdmitted);
 completionBoundary = completionBoundary(1:numAdmitted);
 discarded = discarded(1:numAdmitted);
+accumulatedWait = accumulatedWait(1:numAdmitted);
 if any(completionBoundary==0) || any(firstTxSlot==0)
     error('CSO:UnfinishedPackets', 'A packet has no terminal decoding outcome after draining.');
 end
 totalLatencyInSlotsVector = completionBoundary-arrSlot;
 totalLatencyInSlotsVector(discarded) = Inf;
-waitLatencyInslotsVector = firstTxSlot-arrSlot;
+waitLatencyInslotsVector = accumulatedWait;
 
 if recordDetails
     details = struct('generatedPackets',numGenerated,'admittedPackets',numAdmitted, ...
@@ -189,7 +188,8 @@ if recordDetails
         'drainSlots',max(0,slotId-1-MaxNumSlots),'finalPopulation',numPacketsInSystem, ...
         'decodingDelaySlots',decodingDelay,'feedbackDelaySlots',feedbackDelay, ...
         'arrivalSlot',arrSlot,'firstTxSlot',firstTxSlot,'completionBoundary',completionBoundary, ...
-        'populationBeforeArrival',populationBeforeArrival,'txSlot',txSlotLog, ...
+        'populationBeforeArrival',populationBeforeArrival, ...
+        'accumulatedWaitingDelay',waitLatencyInslotsVector,'txSlot',txSlotLog, ...
         'txPacketId',txPacketLog,'txAttempt',txAttemptLog,'txReadySince',txReadySinceLog);
 end
 end

@@ -28,7 +28,11 @@ function [prob] = getprob_IR( ...
     k, q, pVector, M, MaxTx_IR)
 
 if k == q
-    prob = (1 - pVector(1))^q;
+    if MaxTx_IR == 1
+        prob = 1;
+    else
+        prob = (1 - pVector(1))^q;
+    end
     return;
 elseif k < q || k > M * q
     prob = 0;
