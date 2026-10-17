@@ -1,6 +1,11 @@
 function dvp = getDvpHarqCSO(d, delta, pHarq, f, T, M, Qmax, CSO, zeta)
 % Inputs: deadline d, feedback delay delta, conditional PER pHarq, arrival probability f, slot duration T, attempt limit M, maximum aggregate packet count Qmax, CSO, and decoding delay zeta.
-% Output: total DVP upper bound dvp.
+% Output: DVP upper bound for the phase-averaged aggregate model.
+% Theorem 1: overflow + admission*(waiting tail + finite-wait service term).
+% This is not an analytical bound on a finite-process physical HARQ system.
+% The waiting-delay function is exact within the stated aggregate model;
+% the upper-bound inequality comes from the service-delay bound.
+% The final min(1,...) retains the universal probability cap.
 
 if nargin < 9
     zeta = 1;

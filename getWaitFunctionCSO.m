@@ -1,6 +1,12 @@
 function [waitFunction, pDrop] = getWaitFunctionCSO(pVector, f, M, Qmax, CSO)
 % Inputs: conditional PER vector pVector, arrival probability f, attempt limit M, maximum aggregate packet count Qmax, and CSO.
-% Outputs: waiting-delay function waitFunction and arrival-discard probability pDrop for q=Qmax.
+% Outputs: Eq. (11) normalized aggregate waiting-delay function,
+% and arrival-discard probability pDrop = pi(Qmax).
+% Conditional on admitted q, U is a sum of q independent full-attempt
+% workloads. Its CS starting phase is uniform and independent of (q,U).
+% This construction is not the DTMC's conditional residual workload, nor
+% the physical waiting delay produced by simulate_queue_IR_cso.
+% Waiting and service phases are averaged separately in the aggregate model.
 
 validateattributes(M, {'numeric'}, {'scalar','real','finite','integer','positive'});
 validateattributes(Qmax, {'numeric'}, {'scalar','real','finite','integer','positive'});
@@ -34,6 +40,8 @@ if admissionMass <= 0
         'The waiting-delay function is undefined without admissions.');
 end
 
+% Algorithm 1: P(L=t)=(1-p(t))*prod(p(1:t-1)) for t<M;
+% P(L=M)=prod(p(1:M-1)), including success AND discard at the final attempt.
 reachAttempt = [1, cumprod(p(1:M-1))];
 attemptPmf = reachAttempt .* [1-p(1:M-1), 1];
 underlyingWaitPmf = zeros(1, M * (Qmax-1) + 1);
@@ -47,8 +55,13 @@ for q = 0:Qmax-1
     end
 end
 
+% Mixing over admitted q can precede the CS correction because both
+% operations are linear and beta(k) does not depend on q.
+% Eqs. (10)/(11): (1-beta_k)*u_k + beta_(k-1)*u_(k-1).
+% Each workload u contributes beta_u to waiting slot u+1. The function
+% sums to one by construction; no post-hoc normalization is applied.
 k = 0:numel(underlyingWaitPmf);
 beta = min(1, max(0, k * CSO));
 waitFunction = [(1-beta(1:end-1)) .* underlyingWaitPmf, 0] ...
-    + [0, beta(2:end) .* underlyingWaitPmf];
+    + [0, beta(1:end-1) .* underlyingWaitPmf];
 end

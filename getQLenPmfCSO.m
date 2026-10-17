@@ -1,6 +1,10 @@
 function [QLenPmf, details] = getQLenPmfCSO(pVector, f, M, Qmax, CSO)
 % Inputs: conditional PER vector pVector, arrival probability f, attempt limit M, maximum aggregate packet count Qmax, and CSO.
-% Outputs: packet-count distribution QLenPmf and optional state details.
+% Outputs: aggregate transmission-workload count distribution QLenPmf and
+% optional state details. Table II removes completed transmission workload
+% at the next slot boundary, not at physical decoding or process release.
+% This phase-aware DTMC supplies the q marginal; the subsequent workload
+% and service calculations make their own explicit phase-averaging assumptions.
 
 validateattributes(M, {'numeric'}, {'scalar','real','finite','integer','positive'});
 validateattributes(Qmax, {'numeric'}, {'scalar','real','finite','integer','positive'});

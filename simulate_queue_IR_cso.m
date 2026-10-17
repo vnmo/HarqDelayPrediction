@@ -3,7 +3,13 @@ function [queueSize, TxCount, totalLatencyInSlotsVector, waitLatencyInslotsVecto
     isReTxPrioritised, p_arrival, perVector, feedbackDelay, k_xi, ...
     MaxNumSlots, maxQueueSize, MaxTxPerPkt, isDetArr, decodingDelay)
 % Inputs: retry priority, arrival probability, conditional PER vector, feedback delay, CSP length, slot count, maximum aggregate packet count, attempt limit, arrival mode, and decoding delay.
-% Outputs: aggregate packet count, attempt counts, total and accumulated waiting delays, arrival-discard count, and event details.
+% Outputs: in-system packet count, attempt counts, physical total and
+% accumulated waiting delays, arrival-discard count, and event details.
+% This parallel-HARQ simulation assesses the aggregate approximation; its
+% elapsed waiting delay is not the analytical U+B workload variable.
+% It assumes no additional finite-HARQ-process availability constraint.
+% Capacity is retained until terminal decoding, unlike the virtual DTMC.
+% Process-exhaustion losses are therefore outside this simulator as well.
 
 if nargin < 10
     decodingDelay = 1;

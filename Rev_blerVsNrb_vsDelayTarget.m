@@ -141,6 +141,17 @@ for Qmax_Harq_index = 1:length(Qmax_Harq_list)
         for par_index = 1:length(f_inverse_list)
             for srs_index = 1:length(srs_list)
                 
+                Qmax_Harq = Qmax_Harq_list(Qmax_Harq_index);
+                M_Harq = 4;
+                % Section II/III-B: the analytical bound requires M*Qmax < xi.
+                % Preserve the sweep settings, but do not label out-of-domain
+                % configurations (e.g. Qmax=32, M=4, xi=80) as upper bounds.
+                if M_Harq * Qmax_Harq >= srs_list(srs_index)
+                    warning('CSO:SkippedOutsideModel', ...
+                        'Skipping Qmax=%d, M=%d, xi=%d: M*Qmax must be < xi.', ...
+                        Qmax_Harq, M_Harq, srs_list(srs_index));
+                    continue;
+                end
                 saving_folder = "sinr"+string(sinr_list(sinr_index))+"_par"+string(f_inverse_list(par_index))+"_srs"+string(srs_list(srs_index));
                 mkdir("results_rev_phase_fifo/Q"+string(Qmax_Harq_list(Qmax_Harq_index))+"/"+saving_folder)
                 isReTxPrioritised = true;
@@ -150,8 +161,6 @@ for Qmax_Harq_index = 1:length(Qmax_Harq_list)
                 
                 Qmax = Inf;
                 M = Inf;
-                Qmax_Harq = Qmax_Harq_list(Qmax_Harq_index);
-                M_Harq = 4;
                 
                 T = 1e-3;
                 hvar = 1; % $\mu_{h^2}$

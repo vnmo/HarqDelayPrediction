@@ -1,6 +1,11 @@
 function serviceDvp = getServiceDvpCSO(residualSlots, tau_d, tau_f, pHarq, M, CSO)
 % Inputs: residual slot budget, decoding delay tau_d, feedback delay tau_f, conditional PER pHarq, attempt limit M, and CSO.
-% Output: service-delay upper bound serviceDvp.
+% Output: conditional service-delay upper bound in the aggregate model.
+% Service-start CS phase is uniform and independent of waiting workload;
+% conditional attempt failure probabilities remain pHarq under both waiting
+% and CS-event conditioning (Section III-C and Appendix A).
+% tau_d and tau_f are rounded separately. Attempt m decodes at m*RTT-tau_f
+% and its feedback arrives at m*RTT. The final ACK is not part of delivery.
 
 validateattributes(residualSlots, {'numeric'}, {'real','nonnan'});
 validateattributes(tau_d, {'numeric'}, {'scalar','real','finite','nonnegative'});

@@ -17,9 +17,8 @@ for q = 0:Qmax-1
         weight = packetCountDistribution(q+1) ...
             / (1-packetCountDistribution(end)) * underlying(k+1);
         betaCurrent = min(1, k*CSO);
-        betaNext = min(1, (k+1)*CSO);
         expected(k+1) = expected(k+1) + (1-betaCurrent)*weight;
-        expected(k+2) = expected(k+2) + betaNext*weight;
+        expected(k+2) = expected(k+2) + betaCurrent*weight;
     end
 end
 verifyEqual(testCase, actual, expected, 'AbsTol', 1e-12);
@@ -43,8 +42,7 @@ for M = [1, 2, 4]
         for f = [0, 0.1, 0.6, 0.95]
             for CSO = [0, 1/80]
                 [waitFunction, drop] = getWaitFunctionCSO(0.4, f, M, Qmax, CSO);
-                verifyGreaterThanOrEqual(testCase, sum(waitFunction), 1-1e-12);
-                verifyLessThanOrEqual(testCase, sum(waitFunction), 1+CSO+1e-12);
+                verifyEqual(testCase, sum(waitFunction), 1, 'AbsTol', 1e-12);
                 verifyGreaterThanOrEqual(testCase, min(waitFunction), 0);
                 verifyGreaterThanOrEqual(testCase, drop, 0);
                 verifyLessThanOrEqual(testCase, drop, 1);
@@ -65,17 +63,15 @@ Qmax = 4;
 CSO = 1/80;
 packetCountDistribution = getQLenPmfCSO(p, 0.4, M, Qmax, CSO);
 waitFunction = getWaitFunctionCSO(p, 0.4, M, Qmax, CSO);
-verifyEqual(testCase, waitFunction(2), ...
-    CSO*packetCountDistribution(1)/(1-packetCountDistribution(end)), ...
-    'AbsTol', 1e-12);
+verifyEqual(testCase, waitFunction(2), 0, 'AbsTol', 1e-12);
 verifyEqual(testCase, waitFunction(3), 0, 'AbsTol', 1e-12);
 verifyGreaterThan(testCase, waitFunction(M+1), 0);
 lastK = M*(Qmax-1);
 verifyEqual(testCase, waitFunction(end), ...
-    (lastK+1)*CSO*packetCountDistribution(Qmax) ...
+    lastK*CSO*packetCountDistribution(Qmax) ...
     /(1-packetCountDistribution(end)), 'AbsTol', 1e-12);
 verifyGreaterThan(testCase, waitFunction(end), 0);
-verifyGreaterThan(testCase, sum(waitFunction), 1);
+verifyEqual(testCase, sum(waitFunction), 1, 'AbsTol', 1e-12);
 end
 
 function testOneAttemptAndPERShapes(testCase)
@@ -85,7 +81,7 @@ for per = [0, 0.4, 1]
     base = packetCountDistribution(1:end-1) / (1-drop);
     beta = (0:4)/80;
     expected = [(1-beta(1:end-1)).*base, 0] ...
-        + [0, beta(2:end).*base];
+        + [0, beta(1:end-1).*base];
     verifyEqual(testCase, waitFunction, expected, 'AbsTol', 1e-12);
 end
 p = [0, 0.4, 1];
@@ -176,7 +172,7 @@ verifyEqual(testCase, actual, expected, 'AbsTol', 1e-12);
 verifyEqual(testCase, actual(1:4), ones(1,4), 'AbsTol', 1e-12);
 verifyGreaterThan(testCase, drop, 0);
 verifyEqual(testCase, actual(end), ...
-    min(1, drop+(1-drop)*sum(waitFunction)*prod(p)), 'AbsTol', 1e-12);
+    drop+(1-drop)*prod(p), 'AbsTol', 1e-12);
 end
 
 function testTotalRangesMonotonicityAndShapes(testCase)
